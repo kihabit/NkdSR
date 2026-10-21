@@ -765,5 +765,11 @@
     <string name="fps_30_short">30 FPS</string>
     <string name="gif_creating">Creating GIF…</string>
     <string name="gif_saved">GIF saved</string>
-
+    <!-- Storage Details popup -->
+    <string name="storage_label_used">Used</string>
+    <string name="storage_label_available">Available</string>
+    <string name="storage_label_total">Total</string>
+    <string name="storage_low_warning">Low storage: recordings may stop</string>
+    <string name="storage_gb_value" translatable="false">%1$s GB</string>
+    <string name="storage_percent_value" translatable="false">%1$d%%</string>
 </resources>

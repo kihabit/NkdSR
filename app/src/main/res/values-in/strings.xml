@@ -367,4 +367,9 @@
     <string name="countdown_range_error">Masukkan angka dari %1$d sampai %2$d</string>
     <string name="fps_30_recommended">30 FPS (Disarankan)</string>
     <string name="fps_30_short">30 FPS</string>
+    <!-- Storage Details popup -->
+    <string name="storage_label_used">Terpakai</string>
+    <string name="storage_label_available">Tersedia</string>
+    <string name="storage_label_total">Total</string>
+    <string name="storage_low_warning">Penyimpanan hampir penuh: rekaman bisa berhenti</string>
 </resources>

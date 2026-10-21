@@ -369,4 +369,9 @@
     <string name="countdown_range_error">Introduce un número del %1$d al %2$d</string>
     <string name="fps_30_recommended">30 FPS (recomendado)</string>
     <string name="fps_30_short">30 FPS</string>
+    <!-- Storage Details popup -->
+    <string name="storage_label_used">Usado</string>
+    <string name="storage_label_available">Disponible</string>
+    <string name="storage_label_total">Total</string>
+    <string name="storage_low_warning">Poco almacenamiento: las grabaciones pueden detenerse</string>
 </resources>

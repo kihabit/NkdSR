@@ -370,4 +370,9 @@
     <string name="countdown_range_error">Введите число от %1$d до %2$d</string>
     <string name="fps_30_recommended">30 FPS (рекомендуется)</string>
     <string name="fps_30_short">30 FPS</string>
+    <!-- Storage Details popup -->
+    <string name="storage_label_used">Занято</string>
+    <string name="storage_label_available">Свободно</string>
+    <string name="storage_label_total">Всего</string>
+    <string name="storage_low_warning">Мало памяти: запись может остановиться</string>
 </resources>

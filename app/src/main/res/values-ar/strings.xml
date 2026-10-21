@@ -371,4 +371,9 @@
     <string name="countdown_range_error">أدخل رقمًا من %1$d إلى %2$d</string>
     <string name="fps_30_recommended">30 FPS (موصى به)</string>
     <string name="fps_30_short">30 FPS</string>
+    <!-- Storage Details popup -->
+    <string name="storage_label_used">المستخدم</string>
+    <string name="storage_label_available">المتاح</string>
+    <string name="storage_label_total">الإجمالي</string>
+    <string name="storage_low_warning">مساحة التخزين منخفضة: قد تتوقف التسجيلات</string>
 </resources>

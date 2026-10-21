@@ -25,6 +25,7 @@ import com.nkd.screenrecorder.adapter.GIFGridAdapter
 import com.nkd.screenrecorder.databinding.FragmentImagesBinding
 import com.nkd.screenrecorder.model.GifItem
 import com.nkd.screenrecorder.model.MediaListItem
+import com.nkd.screenrecorder.utils.StorageDetailsDialog
 import com.nkd.screenrecorder.utils.Utils
 import com.nkd.screenrecorder.viewmodel.ImageViewModel
 import kotlinx.coroutines.Dispatchers
@@ -186,20 +187,7 @@ class GIFFragment : Fragment(), MenuProvider {
     }
 
     private fun showStorageDetailsDialog(total: Long, used: Long, free: Long) {
-        val totalGB = Utils.formatFileSizeToGB(total)
-        val usedGB = Utils.formatFileSizeToGB(used)
-        val freeGB = Utils.formatFileSizeToGB(free)
-
-        val usedPercentage = if (total > 0) {
-            ((used.toDouble() / total.toDouble()) * 100).toInt()
-        } else 0
-
-        AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.dialog_storage_title))
-            .setMessage(getString(R.string.dialog_storage_message, totalGB, usedGB, usedPercentage, freeGB))
-            .setPositiveButton(getString(R.string.btn_ok)) { dialog, _ ->
-                dialog.dismiss()
-            }.show()
+        StorageDetailsDialog.show(requireContext(), total, used, free)
     }
 
     private fun setupSelectionToolbar() {

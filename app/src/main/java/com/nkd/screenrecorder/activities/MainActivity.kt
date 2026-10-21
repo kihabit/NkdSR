@@ -46,6 +46,7 @@ import com.nkd.screenrecorder.services.DrawingService
 import com.nkd.screenrecorder.services.NotificationPanelService
 import com.nkd.screenrecorder.services.RecordScreenService
 import com.nkd.screenrecorder.services.SSViewService
+import com.nkd.screenrecorder.utils.StorageDetailsDialog
 import com.nkd.screenrecorder.utils.LanguageDialog
 import com.nkd.screenrecorder.utils.LocaleHelper
 import com.nkd.screenrecorder.utils.NotificationPanel
@@ -730,21 +731,7 @@ class MainActivity : BaseActivity() {
     }
 
     private fun showStorageDetailsDialog(total: Long, used: Long, free: Long) {
-        val totalGB = Utils.formatFileSizeToGB(total)
-        val usedGB = Utils.formatFileSizeToGB(used)
-        val freeGB = Utils.formatFileSizeToGB(free)
-
-        val usedPercentage = if (total > 0) {
-            ((used.toDouble() / total.toDouble()) * 100).toInt()
-        } else 0
-
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.dialog_storage_title))
-            .setMessage(getString(R.string.dialog_storage_message, totalGB, usedGB, usedPercentage, freeGB))
-            .setPositiveButton(getString(R.string.btn_ok)) { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
+        StorageDetailsDialog.show(this, total, used, free)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

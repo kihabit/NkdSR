@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Storage Details popup card (light / dark via colors) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/storage_dialog_bg" />
+    <corners android:radius="@dimen/storage_dialog_corner" />
+</shape>

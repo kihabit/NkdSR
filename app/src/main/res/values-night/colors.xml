@@ -26,4 +26,14 @@
     <color name="toolbox_divider">#1FFFFFFF</color>
     <color name="toolbox_switch_thumb_off">#FFBDBDBD</color>
     <color name="toolbox_switch_track_off">#4DFFFFFF</color>
+    <!-- Storage Details popup (dialog_storage_details) — dark system theme -->
+    <color name="storage_dialog_bg">#FF1E1E1E</color>
+    <color name="storage_dialog_text">#FFF2F2F2</color>
+    <color name="storage_dialog_subtext">#FFB0B0B0</color>
+    <color name="storage_dialog_divider">#1FFFFFFF</color>
+    <color name="storage_ring_track">#FF3A3A3A</color>
+    <color name="storage_icon_bg">#33FF7700</color>
+    <color name="storage_dot_available">#FF9CCC65</color>
+    <color name="storage_dot_total">#FFE0E0E0</color>
+    <color name="storage_low">#FFEF5350</color>
 </resources>

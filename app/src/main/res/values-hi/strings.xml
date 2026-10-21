@@ -777,4 +777,9 @@
     <string name="countdown_range_error">%1$d से %2$d के बीच कोई संख्या दर्ज करें</string>
     <string name="fps_30_recommended">30 FPS (अनुशंसित)</string>
     <string name="fps_30_short">30 FPS</string>
+    <!-- Storage Details popup -->
+    <string name="storage_label_used">उपयोग किया</string>
+    <string name="storage_label_available">उपलब्ध</string>
+    <string name="storage_label_total">कुल</string>
+    <string name="storage_low_warning">कम स्टोरेज: रिकॉर्डिंग रुक सकती है</string>
 </resources>

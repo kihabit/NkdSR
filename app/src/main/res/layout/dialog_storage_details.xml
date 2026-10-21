@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Storage Details popup (tap on the storage pill). Scrolls on very small screens. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fillViewport="true"
+    android:overScrollMode="ifContentScrolls">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_storage_dialog"
+        android:orientation="vertical"
+        android:padding="@dimen/storage_dialog_padding">
+
+        <!-- Header: icon in a soft orange circle · title · ✕ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="@dimen/storage_icon_circle"
+                android:layout_height="@dimen/storage_icon_circle"
+                android:background="@drawable/bg_storage_icon_circle">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/ic_storage_sd"
+                    app:tint="@color/primaryColor" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="8dp"
+                android:layout_weight="1"
+                android:fontFamily="sans-serif-medium"
+                android:text="@string/dialog_storage_title"
+                android:textColor="@color/storage_dialog_text"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnClose"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="-8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/close"
+                android:padding="10dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_close"
+                app:tint="@color/storage_dialog_subtext" />
+        </LinearLayout>
+
+        <!-- Big usage ring, % in the centre -->
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="20dp">
+
+            <com.google.android.material.progressindicator.CircularProgressIndicator
+                android:id="@+id/ring"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:max="100"
+                app:indicatorColor="@color/primaryColor"
+                app:indicatorSize="@dimen/storage_ring_size"
+                app:trackColor="@color/storage_ring_track"
+                app:trackCornerRadius="6dp"
+                app:trackThickness="@dimen/storage_ring_thickness"
+                tools:progress="57" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvPercent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="@color/storage_dialog_text"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    tools:text="57%" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="@string/storage_label_used"
+                    android:textColor="@color/storage_dialog_subtext"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <!-- Used / Available / Total -->
+        <include
+            android:id="@+id/rowUsed"
+            layout="@layout/item_storage_detail_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/storage_dialog_divider" />
+
+        <include
+            android:id="@+id/rowAvailable"
+            layout="@layout/item_storage_detail_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/storage_dialog_divider" />
+
+        <include
+            android:id="@+id/rowTotal"
+            layout="@layout/item_storage_detail_row"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <!-- Low space warning (shown only when free space is low) -->
+        <TextView
+            android:id="@+id/tvLowWarning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:text="@string/storage_low_warning"
+            android:textColor="@color/storage_low"
+            android:textSize="13sp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnOk"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/storage_button_height"
+            android:layout_marginTop="20dp"
+            android:fontFamily="sans-serif-medium"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="@string/btn_ok"
+            android:textAllCaps="false"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            app:backgroundTint="@color/primaryColor"
+            app:cornerRadius="24dp" />
+    </LinearLayout>
+</ScrollView>
