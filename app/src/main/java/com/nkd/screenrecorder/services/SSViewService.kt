@@ -76,6 +76,8 @@ class SSViewService : Service() {
     private var isExpanded = false
     private var currentAnimator: AnimatorSet? = null
     private var isOnRightEdge = false
+    /** Idle collapse 1s after the button is shown / after the finger lifts. */
+    private val screenshotIdleCollapse = Runnable { animateToCollapsed() }
     private val SIZE_EXPANDED = 48
     private val SIZE_COLLAPSED = 36
     private val EDGE_PEEK_AMOUNT = 20
@@ -328,9 +330,7 @@ class SSViewService : Service() {
         screenshotBinding!!.screenshotRoot.alpha = 1f
         isExpanded = true
 
-        mainHandler.postDelayed({
-            animateToCollapsed()
-        }, 1000)
+        mainHandler.postDelayed(screenshotIdleCollapse, 1000)
 
         setupScreenshotDragging()
 
@@ -357,6 +357,7 @@ class SSViewService : Service() {
 
     private fun hideFloatingButton() {
         try {
+            mainHandler.removeCallbacks(screenshotIdleCollapse)
             currentAnimator?.cancel()
             screenshotBinding?.let {
                 if (it.root.isAttachedToWindow) {
@@ -525,7 +526,9 @@ class SSViewService : Service() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun setupScreenshotDragging() {
-        screenshotBinding?.btnScreenshot?.setOnTouchListener(object : View.OnTouchListener {
+        // On the icon AND the circle around it: the 8dp ring (most of a collapsed bubble) had
+        // no listener, so touching it did nothing.
+        val touchListener = object : View.OnTouchListener {
             private var initialTouchX = 0f
             private var initialTouchY = 0f
             private var initialX = 0
@@ -538,17 +541,23 @@ class SSViewService : Service() {
             override fun onTouch(view: View?, motionEvent: MotionEvent): Boolean {
                 when (motionEvent.action) {
                     MotionEvent.ACTION_DOWN -> {
+                        // Wake at once: no idle collapse while the finger is down, and full
+                        // size/opacity now — the drag never waits for a grow animation.
+                        mainHandler.removeCallbacks(screenshotIdleCollapse)
                         currentAnimator?.cancel()
+                        deleteZone.restoreFullSizeOnScreen(
+                            screenshotBinding!!.root, screenshotParams!!,
+                            (SIZE_EXPANDED * Resources.getSystem().displayMetrics.density).toInt()
+                        )
+                        screenshotBinding!!.btnScreenshot.alpha = 1f
+                        screenshotBinding!!.screenshotRoot.alpha = 1f
+                        isExpanded = true
                         isMoving = false
                         wasDragging = false
                         initialX = screenshotParams!!.x
                         initialY = screenshotParams!!.y
                         initialTouchX = motionEvent.rawX
                         initialTouchY = motionEvent.rawY
-
-                        if (!isExpanded) {
-                            animateToExpanded()
-                        }
                         return true
                     }
 
@@ -593,12 +602,10 @@ class SSViewService : Service() {
 
                         if (wasDragging) {
                             if (removeIt) {
-                                // Magnetized on the ✕: shrink + fade, then the existing removal.
-                                // Animate the whole circle (screenshotRoot) — shrinking only the
-                                // icon left the circle frozen until the window vanished — and stop
-                                // the expand/collapse animator so it can't fight the fade.
-                                currentAnimator?.cancel()
-                                deleteZone.animateBubbleRemoval(screenshotBinding!!.screenshotRoot) {
+                                // Magnetized on the ✕: the floating button's close sequence on
+                                // the whole circle (screenshotRoot), then the existing removal.
+                                currentAnimator?.cancel()   // e.g. the 1s post-show collapse
+                                deleteZone.closeBubble(screenshotBinding!!.screenshotRoot) {
                                     hideFloatingButton()
                                     isScreenshotButtonVisible = false
                                     checkShouldStopService()
@@ -608,7 +615,8 @@ class SSViewService : Service() {
                                 updateScreenshotButtonAppearance(false)
                             }
                         } else {
-                            view?.performClick()
+                            screenshotBinding?.btnScreenshot?.performClick()
+                            mainHandler.postDelayed(screenshotIdleCollapse, 1000)
                         }
 
                         isMoving = false
@@ -623,6 +631,8 @@ class SSViewService : Service() {
                         if (wasDragging && screenshotBinding != null && screenshotParams != null) {
                             snapToEdgeAndCollapse()
                             updateScreenshotButtonAppearance(false)
+                        } else {
+                            mainHandler.postDelayed(screenshotIdleCollapse, 1000)
                         }
                         isMoving = false
                         wasDragging = false
@@ -633,7 +643,9 @@ class SSViewService : Service() {
                     else -> return false
                 }
             }
-        })
+        }
+        screenshotBinding?.btnScreenshot?.setOnTouchListener(touchListener)
+        screenshotBinding?.screenshotRoot?.setOnTouchListener(touchListener)
     }
 
     private fun snapToEdgeAndCollapse() {
@@ -873,7 +885,13 @@ class SSViewService : Service() {
     /** Chhoone par bubble turant poora dikhe. */
     private fun wakeBubble() {
         mainHandler.removeCallbacks(bubbleDimRunnable)
-        toolboxBinding?.btnMain?.animate()?.alpha(1f)?.translationX(0f)?.setDuration(150)?.start()
+        // At once (not a 150ms fade-in): the dimmed bubble is shifted toward the edge, and the
+        // drag must start from where the finger actually is.
+        toolboxBinding?.btnMain?.apply {
+            animate().cancel()
+            alpha = 1f
+            translationX = 0f
+        }
     }
 
     /** 2 second baad dhundla karne ka timer (purana timer hata ke). */
@@ -1159,7 +1177,9 @@ class SSViewService : Service() {
     private fun setupToolboxDragging() {
         val dragView = toolboxBinding?.btnMain
 
-        dragView?.setOnTouchListener(object : View.OnTouchListener {
+        // On the bubble AND the rest of its window: touches on the ring around the (dimmed,
+        // edge-shifted) bubble used to do nothing.
+        val touchListener = object : View.OnTouchListener {
             var initialX = 0
             var initialY = 0
             var initialWidth = 0
@@ -1250,7 +1270,7 @@ class SSViewService : Service() {
                             if (isOverToolboxDeleteZone) {
                                 // Magnetized on the ✕: shrink + fade, then the existing removal
                                 isOverToolboxDeleteZone = false
-                                deleteZone.animateBubbleRemoval(toolboxBinding!!.btnMain) {
+                                deleteZone.closeBubble(toolboxBinding!!.btnMain) {
                                     hideToolbox()
                                     isToolboxVisible = false
                                     checkShouldStopService()
@@ -1274,7 +1294,7 @@ class SSViewService : Service() {
                             return true
                         } else {
                             // Let the click event propagate
-                            v.performClick()
+                            toolboxBinding?.btnMain?.performClick()
                             return false
                         }
                     }
@@ -1293,7 +1313,9 @@ class SSViewService : Service() {
                 }
                 return false
             }
-        })
+        }
+        dragView?.setOnTouchListener(touchListener)
+        toolboxBinding?.rootContainer?.setOnTouchListener(touchListener)
     }
 
     private fun snapToEdge() {

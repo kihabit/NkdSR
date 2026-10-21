@@ -261,6 +261,41 @@ class BubbleDeleteZone(
         zone.ivDelete.animate().alpha(if (ring) 0f else 1f).setDuration(120).start()
     }
 
+    /**
+     * Release while magnetized — THE close sequence of the floating (toolbox) bubble, used by
+     * every bubble so they all close the same way: hide the target, shrink + fade the WHOLE
+     * visible bubble [bubble] (150ms), then [onRemoved]. removeView, service stop and any other
+     * cleanup belong in [onRemoved], so they run only after the animation, never during it.
+     */
+    fun closeBubble(bubble: View, onRemoved: () -> Unit) {
+        hide()
+        isOver = false
+        animateBubbleRemoval(bubble, onRemoved)
+    }
+
+    /**
+     * ACTION_DOWN on an edge bubble that may be collapsed / parked past the edge: back to full
+     * size [sizePx] at once — no grow animation the drag would have to wait for — centred where
+     * it was drawn and fully on screen, so it sits under the finger and doesn't jump. Callers
+     * cancel their own animators/timers and restore alpha.
+     */
+    fun restoreFullSizeOnScreen(rootView: View, params: WindowManager.LayoutParams, sizePx: Int) {
+        val screenW = Resources.getSystem().displayMetrics.widthPixels
+        val oldW = if (params.width > 0) params.width else rootView.width
+        val oldH = if (params.height > 0) params.height else rootView.height
+        // Without FLAG_LAYOUT_NO_LIMITS the window is drawn clamped inside the screen
+        val drawnX = params.x.coerceIn(0, maxOf(0, screenW - oldW))
+        params.x = (drawnX + oldW / 2 - sizePx / 2).coerceIn(0, maxOf(0, screenW - sizePx))
+        params.y -= (sizePx - oldH) / 2
+        params.width = sizePx
+        params.height = sizePx
+        try {
+            windowManager.updateViewLayout(rootView, params)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error restoring bubble size", e)
+        }
+    }
+
     /** Release while magnetized: bubble shrinks + fades (150ms), then [onRemoved]. */
     fun animateBubbleRemoval(bubble: View, onRemoved: () -> Unit) {
         try {

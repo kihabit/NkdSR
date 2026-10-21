@@ -98,6 +98,9 @@ class DrawingService : Service() {
         mainHandler.removeCallbacks(idleCollapseRunnable)
     }
 
+    /** The current touch woke the bubble from its collapsed (idle) state. */
+    private var wokenFromCollapsed = false
+
     // Drag-to-close target: the SAME one (code, look, magnet) as SSViewService's bubbles
     private val deleteZone by lazy { BubbleDeleteZone(this, wm, mainHandler) }
 
@@ -313,21 +316,29 @@ class DrawingService : Service() {
         var offsetX = 0
         var offsetY = 0
 
-        binding.mainFab.setOnTouchListener { view, e ->
+        // On the icon AND the circle around it: the 8dp ring (most of a collapsed bubble) had
+        // no listener, so touching it did nothing.
+        val touchListener = View.OnTouchListener { view, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    cancelIdleCollapse()   // no collapse while touched / dragged
+                    // Wake at once: no idle collapse while the finger is down, and full
+                    // size/opacity now — the drag never waits for a grow animation.
+                    cancelIdleCollapse()
                     currentAnimator?.cancel()
+                    wokenFromCollapsed = !isExpanded
+                    deleteZone.restoreFullSizeOnScreen(
+                        binding.root, params,
+                        (SIZE_EXPANDED * Resources.getSystem().displayMetrics.density).toInt()
+                    )
+                    binding.mainFab.alpha = 1f
+                    binding.rootLayout.alpha = 1f
+                    isExpanded = true
                     isMoving = false
                     wasDragging = false
                     initialX = params.x
                     initialY = params.y
                     initialTouchX = e.rawX
                     initialTouchY = e.rawY
-
-                    if (!isExpanded) {
-                        animateToExpanded()
-                    }
                     true
                 }
 
@@ -364,7 +375,8 @@ class DrawingService : Service() {
                             desiredY = initialY + rawY,
                             offsetX = offsetX,
                             offsetY = offsetY,
-                            bubbleSizePx = binding.mainFab.width,
+                            // The visible bubble is the root (orange circle), not the 24dp icon
+                            bubbleSizePx = binding.rootLayout.width,
                             hapticView = view
                         )
                     }
@@ -377,8 +389,11 @@ class DrawingService : Service() {
 
                     if (wasDragging) {
                         if (removeIt) {
-                            // Magnetized on the ✕: shrink + fade, then close drawing completely
-                            deleteZone.animateBubbleRemoval(binding.mainFab) {
+                            // Magnetized on the ✕: the floating button's close sequence on the
+                            // whole circle (rootLayout — shrinking only the icon left the circle
+                            // frozen until the window vanished), then close drawing completely.
+                            currentAnimator?.cancel()
+                            deleteZone.closeBubble(binding.rootLayout) {
                                 closeDrawingFromDeleteZone()
                             }
                         } else {
@@ -386,7 +401,7 @@ class DrawingService : Service() {
                             scheduleIdleCollapse()
                         }
                     } else {
-                        view.performClick()
+                        binding.mainFab.performClick()
                         scheduleIdleCollapse()   // no-op once the click opened the board
                     }
 
@@ -409,6 +424,8 @@ class DrawingService : Service() {
                 else -> false
             }
         }
+        binding.mainFab.setOnTouchListener(touchListener)
+        binding.rootLayout.setOnTouchListener(touchListener)
     }
 
     /**
@@ -442,7 +459,17 @@ class DrawingService : Service() {
 
     private fun setupTools() {
         binding.mainFab.setOnClickListener {
-            if (!isExpanded) {
+            val fromCollapsed = wokenFromCollapsed
+            wokenFromCollapsed = false
+            if (fromCollapsed) {
+                // Tap woke a collapsed bubble (already full size): same result as before
+                if (!isDrawingVieVisible) {
+                    binding.rootLayout.isGone = true
+                    showDrawingBoard()
+                } else {
+                    closeDrawingBoard()
+                }
+            } else if (!isExpanded) {
                 animateToExpanded {
                     if (!isDrawingVieVisible) {
                         binding.rootLayout.isGone = true
