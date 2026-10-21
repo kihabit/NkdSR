@@ -29,6 +29,7 @@ import android.os.CountDownTimer
 import android.os.Environment
 import android.os.Handler
 import android.os.IBinder
+import android.os.SystemClock
 import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
@@ -130,9 +131,29 @@ class RecordScreenService : Service() {
     /** GIF capture uses a fixed timer — Pause is hidden in its notification. */
     private var isGifCapture = false
 
-    /** RECORDING panel of the notification toolbar (Pause/Resume, Stop, Tools). */
+    // ── Recorded length for the notification timer (paused time not counted) ──
+    /** Recorded time of all finished segments (a segment ends at Pause / Stop). */
+    private var recordedMillis = 0L
+    /** elapsedRealtime() when the running segment started; 0 = not running (countdown, paused). */
+    private var segmentStartElapsed = 0L
+
+    private fun recordedMillisNow(): Long =
+        recordedMillis +
+                if (segmentStartElapsed > 0L) SystemClock.elapsedRealtime() - segmentStartElapsed else 0L
+
+    /** New recording / GIF capture: timer back to 00:00, stopped until MediaRecorder starts. */
+    private fun resetRecordingTimer() {
+        recordedMillis = 0L
+        segmentStartElapsed = 0L
+    }
+
+    /** RECORDING panel of the notification toolbar (Pause/Resume, Stop, Tools, live timer). */
     private fun createRecordingPanel(): Notification =
-        NotificationPanel.buildRecording(this, isPaused, allowPause = !isGifCapture)
+        NotificationPanel.buildRecording(
+            this, isPaused, allowPause = !isGifCapture,
+            recordedMillis = recordedMillisNow(),
+            timerRunning = isRecording && !isPaused && segmentStartElapsed > 0L
+        )
 
     private val recordingMediaProjectionCallback = object : MediaProjection.Callback() {
         override fun onStop() {
@@ -211,6 +232,7 @@ class RecordScreenService : Service() {
             ACTION_START_RECORDING -> {
                 isGifCapture = false
                 isPaused = false
+                resetRecordingTimer()
                 // Start foreground with MEDIA_PROJECTION type for recording
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     startForeground(
@@ -266,6 +288,7 @@ class RecordScreenService : Service() {
             ACTION_START_GIF -> {
                 isGifCapture = true   // fixed 18s capture → no Pause button
                 isPaused = false
+                resetRecordingTimer()
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                     startForeground(
@@ -436,6 +459,8 @@ class RecordScreenService : Service() {
             createVirtualDisplayForRecording()
 
             mediaRecorder?.start()
+            resetRecordingTimer()
+            segmentStartElapsed = SystemClock.elapsedRealtime()   // timer starts with the recorder
             updateRecordingState(true)
             sendRecordingStateBroadcast(true)
             updateNotification(getString(R.string.notif_recording_in_progress))
@@ -515,6 +540,8 @@ class RecordScreenService : Service() {
         if (!isRecording || isPaused || isGifCapture) return
         try {
             mediaRecorder?.pause()
+            recordedMillis = recordedMillisNow()   // freeze the timer at the recorded time
+            segmentStartElapsed = 0L
             isPaused = true
             updateNotification(getString(R.string.notif_recording_paused))
         } catch (e: Exception) {
@@ -527,6 +554,7 @@ class RecordScreenService : Service() {
         if (!isRecording || !isPaused) return
         try {
             mediaRecorder?.resume()
+            segmentStartElapsed = SystemClock.elapsedRealtime()   // continue from the frozen time
             isPaused = false
             updateNotification(getString(R.string.notif_recording_in_progress))
         } catch (e: Exception) {
@@ -535,6 +563,7 @@ class RecordScreenService : Service() {
     }
 
     private fun stopRecording() {
+        resetRecordingTimer()   // stopped → the RECORDING panel (and its timer) goes away
         pausedByScreenOff = false
         isPaused = false   // stop() is valid from the paused state too
         try {

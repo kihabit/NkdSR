@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Static red dot before the recording notification's live timer -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/notif_rec_dot" />
+    <size
+        android:width="@dimen/notif_timer_dot_size"
+        android:height="@dimen/notif_timer_dot_size" />
+</shape>

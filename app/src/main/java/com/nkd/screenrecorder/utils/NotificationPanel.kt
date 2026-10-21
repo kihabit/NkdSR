@@ -8,7 +8,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.view.View
+import android.os.SystemClock
 import android.widget.RemoteViews
+import androidx.core.content.ContextCompat
 import androidx.core.app.NotificationCompat
 import com.nkd.screenrecorder.R
 import com.nkd.screenrecorder.activities.MainActivity
@@ -72,13 +74,21 @@ object NotificationPanel {
             title = LocaleHelper.wrap(context).getString(R.string.notif_toolbar_title)
         )
 
-    /** RECORDING: [app icon below 12] | Pause or Resume (both GONE for GIF capture) | Stop | Tools.
-     *  No Screenshot button — screenshots are disabled while recording. */
-    fun buildRecording(context: Context, paused: Boolean, allowPause: Boolean): Notification =
+    /** RECORDING: [app icon below 12] | Pause or Resume (both GONE for GIF capture) | Stop | Tools | ● timer.
+     *  No Screenshot button — screenshots are disabled while recording.
+     *  [recordedMillis] = recording length so far (paused time not counted); the timer counts
+     *  on from it while [timerRunning], and stands still (orange) otherwise. */
+    fun buildRecording(
+        context: Context,
+        paused: Boolean,
+        allowPause: Boolean,
+        recordedMillis: Long,
+        timerRunning: Boolean
+    ): Notification =
         build(
             context,
-            collapsed = recordingViews(context, paused, allowPause),
-            expanded = recordingViews(context, paused, allowPause),
+            collapsed = recordingViews(context, paused, allowPause, recordedMillis, timerRunning),
+            expanded = recordingViews(context, paused, allowPause, recordedMillis, timerRunning),
             title = LocaleHelper.wrap(context).getString(if (paused) R.string.notif_paused else R.string.notif_recording)
         )
 
@@ -104,8 +114,26 @@ object NotificationPanel {
             setOnClickPendingIntent(R.id.cellExit, exitIntent(context))
         }
 
-    private fun recordingViews(context: Context, paused: Boolean, allowPause: Boolean) =
+    private fun recordingViews(
+        context: Context,
+        paused: Boolean,
+        allowPause: Boolean,
+        recordedMillis: Long,
+        timerRunning: Boolean
+    ) =
         RemoteViews(context.packageName, R.layout.notification_panel_recording).apply {
+            // Live timer: base = now − recorded time, so it shows the recorded time and, while
+            // running, the system counts on from there (MM:SS, H:MM:SS after an hour).
+            setChronometer(
+                R.id.recTimer,
+                SystemClock.elapsedRealtime() - recordedMillis,
+                null,
+                timerRunning
+            )
+            setTextColor(
+                R.id.recTimer,
+                ContextCompat.getColor(context, if (paused) R.color.primaryColor else R.color.white)
+            )
             setAppIconClick(context)
             val loc = LocaleHelper.wrap(context)
             setLabel(loc, R.id.labelPause, R.id.iconPause, R.string.notif_pause)

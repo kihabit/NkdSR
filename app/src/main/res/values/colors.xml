@@ -60,4 +60,6 @@
     <color name="storage_dot_available">#FF9CCC65</color>
     <color name="storage_dot_total">#FF424242</color>
     <color name="storage_low">#FFE53935</color>
+    <!-- Recording notification: red dot before the live timer -->
+    <color name="notif_rec_dot">#FFFF3B30</color>
 </resources>
