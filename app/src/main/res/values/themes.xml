@@ -68,4 +68,17 @@
         <item name="android:scaleType">centerInside</item>
     </style>
 
+    <!-- Facecam window controls: 40dp touch area, 26dp orange circle (bg inset 7dp),
+         14dp white icon (40 - 2 × 13dp padding), soft shadow for light/dark previews. -->
+    <style name="FacecamControlButton">
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:layout_margin">0dp</item>
+        <item name="android:padding">13dp</item>
+        <item name="android:background">@drawable/bg_facecam_control</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:elevation">4dp</item>
+        <item name="tint">@color/white</item>
+    </style>
+
 </resources>

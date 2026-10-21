@@ -39,10 +39,10 @@ import androidx.core.view.isVisible
 import com.google.android.material.imageview.ShapeableImageView
 import com.nkd.screenrecorder.R
 import com.nkd.screenrecorder.activities.ProjectionPermissionActivity
-import com.nkd.screenrecorder.databinding.LayoutDeleteZoneBinding
 import com.nkd.screenrecorder.databinding.LayoutFloatingTitanBinding
 import com.nkd.screenrecorder.databinding.ViewDrawingColorPalletesBinding
 import com.nkd.screenrecorder.databinding.ViewDrawingToolbarBinding
+import com.nkd.screenrecorder.utils.BubbleDeleteZone
 import com.nkd.screenrecorder.utils.DrawMode
 import com.nkd.screenrecorder.utils.DrawingOverlayView
 import com.nkd.screenrecorder.utils.dpToPx
@@ -79,10 +79,27 @@ class DrawingService : Service() {
     private val SIZE_EXPANDED = 48
     private val SIZE_COLLAPSED = 36
     private val EDGE_PEEK_AMOUNT = 20
-    private var deleteZoneBinding: LayoutDeleteZoneBinding? = null
-    private var deleteZoneParams: WindowManager.LayoutParams? = null
-    private var isDeleteZoneVisible = false
-    private var isOverDeleteZone = false
+
+    // Idle: same as SSViewService's screenshot bubble, which collapses 1s after it is shown
+    // (36dp, alpha 0.7, only 20dp peeking from the edge). Here the timer restarts after every
+    // touch and never runs while dragging or while the drawing board is open.
+    private val IDLE_COLLAPSE_DELAY_MS = 1000L
+    private val idleCollapseRunnable = Runnable {
+        if (isRunning && !isDrawingVieVisible) animateToCollapsed()
+    }
+
+    private fun scheduleIdleCollapse() {
+        mainHandler.removeCallbacks(idleCollapseRunnable)
+        if (isDrawingVieVisible) return
+        mainHandler.postDelayed(idleCollapseRunnable, IDLE_COLLAPSE_DELAY_MS)
+    }
+
+    private fun cancelIdleCollapse() {
+        mainHandler.removeCallbacks(idleCollapseRunnable)
+    }
+
+    // Drag-to-close target: the SAME one (code, look, magnet) as SSViewService's bubbles
+    private val deleteZone by lazy { BubbleDeleteZone(this, wm, mainHandler) }
 
     // Selected tool tracking
     private var selectedToolView: ImageView? = null
@@ -128,14 +145,13 @@ class DrawingService : Service() {
                 params.x = resources.displayMetrics.widthPixels - 10
                 params.y = (resources.displayMetrics.heightPixels / 2) - 100
 
+                deleteZone.ensureWindow()   // delete zone must sit BELOW the bubble (window order)
                 wm.addView(binding.root, params)
                 binding.mainFab.alpha = 1f
                 binding.rootLayout.alpha = 1f
 
                 isExpanded = true
-                mainHandler.postDelayed({
-                    animateToCollapsed()
-                }, 1000)
+                scheduleIdleCollapse()
                 setupDrag()
                 setupTools()
                 isRunning = true
@@ -294,10 +310,13 @@ class DrawingService : Service() {
         var initialTouchY = 0f
         var isMoving = false
         var wasDragging = false
+        var offsetX = 0
+        var offsetY = 0
 
         binding.mainFab.setOnTouchListener { view, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
+                    cancelIdleCollapse()   // no collapse while touched / dragged
                     currentAnimator?.cancel()
                     isMoving = false
                     wasDragging = false
@@ -317,61 +336,73 @@ class DrawingService : Service() {
                     val rawY = (e.rawY - initialTouchY).toInt()
 
                     if (abs(rawX) > 10 || abs(rawY) > 10) {
+                        if (!isMoving) {
+                            // The magnet needs the real window size (params start as WRAP_CONTENT)
+                            if (params.width < 0 || params.height < 0) {
+                                params.width = binding.root.width
+                                params.height = binding.root.height
+                            }
+                            // On-screen vs params offset of this window (for the magnet)
+                            val off = deleteZone.screenOffsetOf(binding.root, params)
+                            offsetX = off.first
+                            offsetY = off.second
+                        }
                         isMoving = true
                         wasDragging = true
 
-                        if (!isDeleteZoneVisible) {
-                            showDeleteZone()
+                        if (!deleteZone.isVisible) {
+                            deleteZone.show()
                         }
                     }
 
                     if (isMoving) {
-                        val newX = initialX + rawX
-                        val newY = initialY + rawY
-
-                        params.x = newX
-                        params.y = newY
-
-                        try {
-                            wm.updateViewLayout(binding.root, params)
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error updating view layout", e)
-                        }
-
-                        val wasOverDeleteZone = isOverDeleteZone
-                        isOverDeleteZone = isInDeleteZone(newX, newY)
-
-                        if (isOverDeleteZone != wasOverDeleteZone) {
-                            updateScreenshotButtonAppearance(isOverDeleteZone)
-                            updateDeleteZoneAppearance(isOverDeleteZone)
-
-                            if (isOverDeleteZone) {
-                                view.performHapticFeedback(
-                                    android.view.HapticFeedbackConstants.LONG_PRESS
-                                )
-                            }
-                        }
+                        // Follow the finger, or stick to the delete circle (magnet + haptic)
+                        deleteZone.dragWithMagnet(
+                            rootView = binding.root,
+                            params = params,
+                            desiredX = initialX + rawX,
+                            desiredY = initialY + rawY,
+                            offsetX = offsetX,
+                            offsetY = offsetY,
+                            bubbleSizePx = binding.mainFab.width,
+                            hapticView = view
+                        )
                     }
                     true
                 }
 
                 MotionEvent.ACTION_UP -> {
-                    hideDeleteZone()
+                    val removeIt = wasDragging && deleteZone.isOver
+                    deleteZone.hide()
 
                     if (wasDragging) {
-                        if (isOverDeleteZone) {
-                            hideFloatingButton()
-                            isRunning = false
-                            updateScreenshotButtonAppearance(false)
+                        if (removeIt) {
+                            // Magnetized on the ✕: shrink + fade, then close drawing completely
+                            deleteZone.animateBubbleRemoval(binding.mainFab) {
+                                closeDrawingFromDeleteZone()
+                            }
                         } else {
                             snapToEdge()
+                            scheduleIdleCollapse()
                         }
                     } else {
                         view.performClick()
+                        scheduleIdleCollapse()   // no-op once the click opened the board
                     }
 
                     isMoving = false
-                    isOverDeleteZone = false
+                    deleteZone.isOver = false
+                    true
+                }
+
+                MotionEvent.ACTION_CANCEL -> {
+                    // Gesture taken away: hide the delete zone, no delete
+                    deleteZone.hide()
+                    if (wasDragging) snapToEdge()
+                    scheduleIdleCollapse()
+                    isMoving = false
+                    wasDragging = false
+                    deleteZone.isOver = false
                     true
                 }
 
@@ -380,8 +411,21 @@ class DrawingService : Service() {
         }
     }
 
+    /**
+     * Bubble released on the delete zone: remove the canvas, toolbar and palette, then the
+     * bubble (its ACTION_HIDE_BRUSH broadcast updates the app's drawing button), and stop.
+     * isRunning=false keeps the toolbox's drawing switch in sync.
+     */
+    private fun closeDrawingFromDeleteZone() {
+        if (isDrawingVieVisible) closeDrawingBoard()
+        hideFloatingButton()
+        isRunning = false
+        stopSelf()
+    }
+
     private fun hideFloatingButton() {
         try {
+            cancelIdleCollapse()
             currentAnimator?.cancel()
             binding.let {
                 wm.removeView(it.root)
@@ -424,15 +468,18 @@ class DrawingService : Service() {
         drawView?.toolbarView = null   // ← NEW LINE
         drawView?.paletteView = null   // ← NEW LINE
 
-        drawingBinding?.let { wm.removeView(it.root) }
-        drawView?.let { wm.removeView(it) }
+        // Each removal on its own: a failing toolbar removal must not leave the full-screen canvas
+        removeOverlay(drawingBinding?.root)
+        removeOverlay(drawView)
         drawView = null
         drawingBinding = null
         selectedToolView = null
         isDrawingVieVisible = false
+        scheduleIdleCollapse()
     }
 
     private fun showDrawingBoard() {
+        cancelIdleCollapse()
         startDrawing()
         drawingBinding = ViewDrawingToolbarBinding.inflate(LayoutInflater.from(this), null, false)
         drawingViewParams = WindowManager.LayoutParams(
@@ -518,9 +565,6 @@ class DrawingService : Service() {
             toolClose.setOnClickListener {
                 closeDrawingBoard()
                 binding.rootLayout.isVisible = true
-                mainHandler.postDelayed({
-                    animateToCollapsed()
-                }, 1000)
             }
         }
     }
@@ -648,141 +692,28 @@ class DrawingService : Service() {
         wm.addView(drawView, p)
     }
 
+    /** Released elsewhere: slide to the nearest edge, same animation as SSViewService's toolbox bubble. */
     private fun snapToEdge() {
-        val screenWidth = resources.displayMetrics.widthPixels
-        params.x = if (params.x > screenWidth / 2) screenWidth else 0
-        wm.updateViewLayout(binding.root, params)
-    }
+        val screenWidth = Resources.getSystem().displayMetrics.widthPixels
+        val bubbleWidth = if (binding.root.width > 0) binding.root.width else params.width
+        val isOnLeftSide = params.x + bubbleWidth / 2 < screenWidth / 2
+        val margin = -10.dpToPx()
+        val targetX = if (isOnLeftSide) margin else screenWidth - bubbleWidth - margin
 
-    private fun showDeleteZone() {
-        if (isDeleteZoneVisible || deleteZoneBinding != null) return
-
-        try {
-            deleteZoneBinding =
-                LayoutDeleteZoneBinding.inflate(LayoutInflater.from(this), null, false)
-
-            val displayMetrics = Resources.getSystem().displayMetrics
-            val screenWidth = displayMetrics.widthPixels
-            val screenHeight = displayMetrics.heightPixels
-
-            deleteZoneParams = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                    TYPE_APPLICATION_OVERLAY
-                else
-                    WindowManager.LayoutParams.TYPE_PHONE,
-                FLAG_NOT_FOCUSABLE or
-                        WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
-                PixelFormat.TRANSLUCENT
-            ).apply {
-                gravity = Gravity.TOP or Gravity.START
-                x = (screenWidth - 80.dpToPx()) / 2
-                y = screenHeight - 200.dpToPx()
-            }
-
-            wm.addView(deleteZoneBinding!!.root, deleteZoneParams)
-            isDeleteZoneVisible = true
-
-            deleteZoneBinding!!.root.apply {
-                scaleX = 0f
-                scaleY = 0f
-                alpha = 0f
-                animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .alpha(1f)
-                    .setDuration(200)
-                    .setInterpolator(OvershootInterpolator())
-                    .start()
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Error showing delete zone", e)
-        }
-    }
-
-    private fun hideDeleteZone() {
-        if (!isDeleteZoneVisible || deleteZoneBinding == null) return
-
-        try {
-            deleteZoneBinding!!.root.animate()
-                .scaleX(0f)
-                .scaleY(0f)
-                .alpha(0f)
-                .setDuration(150)
-                .withEndAction {
-                    try {
-                        wm.removeView(deleteZoneBinding!!.root)
-                        deleteZoneBinding = null
-                        deleteZoneParams = null
-                        isDeleteZoneVisible = false
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Error removing delete zone", e)
-                    }
+        ValueAnimator.ofInt(params.x, targetX).apply {
+            duration = 250
+            interpolator = OvershootInterpolator(0.5f)
+            addUpdateListener { animator ->
+                params.x = animator.animatedValue as Int
+                try {
+                    wm.updateViewLayout(binding.root, params)
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error updating layout during snap", e)
                 }
-                .start()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error hiding delete zone", e)
-        }
-    }
-
-    private fun isInDeleteZone(x: Int, y: Int): Boolean {
-        if (deleteZoneParams == null || deleteZoneBinding == null) return false
-
-        val deleteZoneX = deleteZoneParams!!.x
-        val deleteZoneY = deleteZoneParams!!.y
-        val deleteZoneWidth = 100.dpToPx()
-        val deleteZoneHeight = 100.dpToPx()
-
-        val buttonCenterX = x + (params.width) / 2
-        val buttonCenterY = y + (params.height) / 2
-
-        return buttonCenterX >= deleteZoneX &&
-                buttonCenterX <= deleteZoneX + deleteZoneWidth &&
-                buttonCenterY >= deleteZoneY &&
-                buttonCenterY <= deleteZoneY + deleteZoneHeight
-    }
-
-    private fun updateScreenshotButtonAppearance(isDanger: Boolean) {
-        binding.mainFab.let { button ->
-            if (isDanger) {
-                button.setBackgroundResource(R.drawable.screenshot_button_danger)
-                button.animate()
-                    .scaleX(1.1f)
-                    .scaleY(1.1f)
-                    .setDuration(100)
-                    .start()
-            } else {
-                button.background = null
-                button.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(100)
-                    .start()
             }
+            start()
         }
     }
-
-    private fun updateDeleteZoneAppearance(isActive: Boolean) {
-        deleteZoneBinding?.ivDelete?.let { deleteIcon ->
-            if (isActive) {
-                deleteIcon.animate()
-                    .scaleX(1.1f)
-                    .scaleY(1.1f)
-                    .alpha(1f)
-                    .setDuration(100)
-                    .start()
-            } else {
-                deleteIcon.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .alpha(0.8f)
-                    .setDuration(100)
-                    .start()
-            }
-        }
-    }
-
 
     //    <------------------------ Adding Color Palettes ------------------------------->
     private fun addColorPalettes() {
@@ -883,13 +814,27 @@ class DrawingService : Service() {
     }
 
     private fun hideColorPalettes() {
-        wm.removeView(viewColorSelectorBinding.root)
+        removeOverlay(viewColorSelectorBinding.root)
         isColorPalettesShown = false
         drawView?.paletteView = null
     }
 
+    /** removeView that never throws and skips views that aren't attached. */
+    private fun removeOverlay(view: View?) {
+        if (view == null || !view.isAttachedToWindow) return
+        try {
+            wm.removeView(view)
+        } catch (e: Exception) {
+            Log.w(TAG, "Overlay already removed: ${e.message}")
+        }
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        cancelIdleCollapse()
+        currentAnimator?.cancel()
+        if (isColorPalettesShown) hideColorPalettes()   // palette window was never removed here
+        deleteZone.removeWindow()
         try {
             wm.removeView(binding.root)
         } catch (e: Exception) {

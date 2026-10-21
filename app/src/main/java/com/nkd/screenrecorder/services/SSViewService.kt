@@ -46,7 +46,6 @@ import com.nkd.screenrecorder.activities.MainActivity
 import com.nkd.screenrecorder.activities.ProjectionPermissionActivity
 import com.nkd.screenrecorder.databinding.DialogToolboxLayoutBinding
 import com.nkd.screenrecorder.databinding.LayoutBubbleMenuBinding
-import com.nkd.screenrecorder.databinding.LayoutDeleteZoneBinding
 import com.nkd.screenrecorder.databinding.LayoutRecordingFlipBinding
 import com.nkd.screenrecorder.databinding.ServiceScreenShotBinding
 import com.nkd.screenrecorder.fragments.SettingFragment
@@ -54,6 +53,7 @@ import com.nkd.screenrecorder.fragments.SettingFragment.Companion.AUDIO_SOURCE
 import com.nkd.screenrecorder.fragments.SettingFragment.Companion.PREFS_NAME
 import com.nkd.screenrecorder.fragments.SettingFragment.Companion.SHOW_COUNT_DOWN
 import com.nkd.screenrecorder.fragments.SettingFragment.Companion.VIDEO_QUALITY
+import com.nkd.screenrecorder.utils.BubbleDeleteZone
 import com.nkd.screenrecorder.utils.LocaleHelper
 import com.nkd.screenrecorder.utils.dpToPx
 import kotlin.math.abs
@@ -80,11 +80,6 @@ class SSViewService : Service() {
     private val SIZE_COLLAPSED = 36
     private val EDGE_PEEK_AMOUNT = 20
 
-    // Delete zone related
-    private var deleteZoneBinding: LayoutDeleteZoneBinding? = null
-    private var deleteZoneParams: WindowManager.LayoutParams? = null
-    private var isDeleteZoneVisible = false
-    private var isOverDeleteZone = false
 
     // Toolbox related
     private var toolboxBinding: LayoutRecordingFlipBinding? = null
@@ -303,7 +298,7 @@ class SSViewService : Service() {
             height = expandedSizePx
         }
 
-        ensureDeleteZoneWindow()   // delete zone must sit BELOW the bubble (window order)
+        deleteZone.ensureWindow()   // delete zone must sit BELOW the bubble (window order)
 
         try {
             windowManager.addView(binding.root, params)
@@ -564,27 +559,28 @@ class SSViewService : Service() {
                         if (abs(rawX) > 10 || abs(rawY) > 10) {
                             if (!isMoving) {
                                 // On-screen vs params offset of this window (for the magnet)
-                                val off = screenOffsetOf(screenshotBinding!!.root, screenshotParams!!)
+                                val off = deleteZone.screenOffsetOf(screenshotBinding!!.root, screenshotParams!!)
                                 offsetX = off.first
                                 offsetY = off.second
                             }
                             isMoving = true
                             wasDragging = true
 
-                            if (!isDeleteZoneVisible) {
-                                showDeleteZone()
+                            if (!deleteZone.isVisible) {
+                                deleteZone.show()
                             }
                         }
 
                         if (isMoving) {
-                            dragWithMagnet(
+                            deleteZone.dragWithMagnet(
                                 rootView = screenshotBinding!!.root,
                                 params = screenshotParams!!,
                                 desiredX = initialX + rawX,
                                 desiredY = initialY + rawY,
                                 offsetX = offsetX,
                                 offsetY = offsetY,
-                                bubbleSizePx = screenshotBinding!!.btnScreenshot.width,
+                                // The visible bubble is the root (orange circle), not the 24dp icon
+                                bubbleSizePx = screenshotBinding!!.screenshotRoot.width,
                                 hapticView = view
                             )
                         }
@@ -592,13 +588,17 @@ class SSViewService : Service() {
                     }
 
                     MotionEvent.ACTION_UP -> {
-                        val removeIt = wasDragging && isOverDeleteZone
-                        hideDeleteZone()
+                        val removeIt = wasDragging && deleteZone.isOver
+                        deleteZone.hide()
 
                         if (wasDragging) {
                             if (removeIt) {
-                                // Magnetized on the ✕: shrink + fade, then the existing removal
-                                animateBubbleRemoval(screenshotBinding!!.btnScreenshot) {
+                                // Magnetized on the ✕: shrink + fade, then the existing removal.
+                                // Animate the whole circle (screenshotRoot) — shrinking only the
+                                // icon left the circle frozen until the window vanished — and stop
+                                // the expand/collapse animator so it can't fight the fade.
+                                currentAnimator?.cancel()
+                                deleteZone.animateBubbleRemoval(screenshotBinding!!.screenshotRoot) {
                                     hideFloatingButton()
                                     isScreenshotButtonVisible = false
                                     checkShouldStopService()
@@ -612,7 +612,21 @@ class SSViewService : Service() {
                         }
 
                         isMoving = false
-                        isOverDeleteZone = false
+                        deleteZone.isOver = false
+                        return true
+                    }
+
+                    MotionEvent.ACTION_CANCEL -> {
+                        // Gesture taken away (system gesture, shade, screen off): never leave
+                        // the delete zone showing, and never treat it as a delete.
+                        deleteZone.hide()
+                        if (wasDragging && screenshotBinding != null && screenshotParams != null) {
+                            snapToEdgeAndCollapse()
+                            updateScreenshotButtonAppearance(false)
+                        }
+                        isMoving = false
+                        wasDragging = false
+                        deleteZone.isOver = false
                         return true
                     }
 
@@ -685,241 +699,9 @@ class SSViewService : Service() {
         animatorSet.start()
     }
 
-    // ============ DELETE ZONE METHODS (XRecorder style, with magnet) ============
-    //
-    // ONE full-screen, NOT-touchable window, added BEFORE the bubbles (ensureDeleteZoneWindow)
-    // so it is drawn BELOW them — the shrunken circle becomes a dark ring AROUND the bubble.
-    // Hidden (GONE) except while a bubble is dragged; a GONE window is not shown, so it never
-    // blocks touches to other apps.
-
-    private val deleteMagnetRadiusDp = 90f
-    private val deleteCircleSizeDp = 96f
-    private var deleteMagnetAnimator: ValueAnimator? = null
-
-    /** Adds the (hidden) delete-zone window if it doesn't exist yet. Call before adding a bubble. */
-    private fun ensureDeleteZoneWindow() {
-        if (deleteZoneBinding != null) return
-        try {
-            val zone = LayoutDeleteZoneBinding.inflate(LayoutInflater.from(this), null, false)
-            deleteZoneParams = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                else WindowManager.LayoutParams.TYPE_PHONE,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                        WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                        WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                        WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-                PixelFormat.TRANSLUCENT
-            ).apply {
-                gravity = Gravity.TOP or Gravity.START
-                // Cover the nav-bar area too (gradient reaches the very bottom)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) setFitInsetsTypes(0)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    layoutInDisplayCutoutMode =
-                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-                }
-            }
-            windowManager.addView(zone.root, deleteZoneParams)
-            deleteZoneBinding = zone
-        } catch (e: Exception) {
-            Log.e(TAG, "Error adding delete zone window", e)
-            deleteZoneBinding = null
-            deleteZoneParams = null
-        }
-    }
-
-    /** Removes the delete-zone window (no bubble left / service stop). */
-    private fun removeDeleteZoneWindow() {
-        deleteMagnetAnimator?.cancel()
-        deleteZoneBinding?.let {
-            try {
-                windowManager.removeView(it.root)
-            } catch (e: Exception) {
-                Log.w(TAG, "Delete zone already removed: ${e.message}")
-            }
-        }
-        deleteZoneBinding = null
-        deleteZoneParams = null
-        isDeleteZoneVisible = false
-        isOverDeleteZone = false
-    }
-
-    /** Drag started: gradient (35% of screen) fades in, circle scales in with overshoot. */
-    private fun showDeleteZone() {
-        if (isDeleteZoneVisible) return
-        ensureDeleteZoneWindow()
-        val zone = deleteZoneBinding ?: return
-        try {
-            val dm = resources.displayMetrics
-            val root = zone.root
-            val screenH = if (root.height > 0) root.height else Resources.getSystem().displayMetrics.heightPixels
-            val navInset = androidx.core.view.ViewCompat.getRootWindowInsets(root)
-                ?.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars())?.bottom ?: 0
-
-            (zone.deleteGradient.layoutParams as FrameLayout.LayoutParams).height = (screenH * 0.35f).toInt()
-            // Circle centre ~120dp above the bottom, inside the nav-bar inset
-            val circleSize = (deleteCircleSizeDp * dm.density).toInt()
-            (zone.deleteCircle.layoutParams as FrameLayout.LayoutParams).bottomMargin =
-                navInset + (120f * dm.density).toInt() - circleSize / 2
-            zone.deleteGradient.requestLayout()
-            zone.deleteCircle.requestLayout()
-
-            root.visibility = View.VISIBLE
-            isDeleteZoneVisible = true
-            isOverDeleteZone = false
-
-            zone.deleteGradient.animate().cancel()
-            zone.deleteGradient.alpha = 0f
-            zone.deleteGradient.animate().alpha(1f).setDuration(150).start()
-
-            zone.deleteCircle.animate().cancel()
-            zone.deleteCircle.scaleX = 0f
-            zone.deleteCircle.scaleY = 0f
-            zone.deleteCircle.alpha = 1f
-            zone.ivDelete.alpha = 1f
-            zone.deleteCircle.animate().scaleX(1f).scaleY(1f).setDuration(200)
-                .setInterpolator(OvershootInterpolator(1.5f)).start()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error showing delete zone", e)
-        }
-    }
-
-    /** Drag ended: gradient and circle fade out, window hidden again (kept for next drag). */
-    private fun hideDeleteZone() {
-        deleteMagnetAnimator?.cancel()
-        val zone = deleteZoneBinding
-        if (!isDeleteZoneVisible || zone == null) {
-            isDeleteZoneVisible = false
-            return
-        }
-        isDeleteZoneVisible = false
-        try {
-            zone.deleteGradient.animate().cancel()
-            zone.deleteCircle.animate().cancel()
-            zone.deleteGradient.animate().alpha(0f).setDuration(150).start()
-            zone.deleteCircle.animate().alpha(0f).setDuration(150).withEndAction {
-                if (!isDeleteZoneVisible) zone.root.visibility = View.GONE
-            }.start()
-        } catch (e: Exception) {
-            Log.e(TAG, "Error hiding delete zone", e)
-            zone.root.visibility = View.GONE
-        }
-    }
-
-    /** Centre of the delete circle (at full size) in ON-SCREEN coordinates, or null. */
-    private fun deleteCircleCenterOnScreen(): Pair<Float, Float>? {
-        val zone = deleteZoneBinding ?: return null
-        val circle = zone.deleteCircle
-        if (circle.width == 0) return null
-        val rootLoc = IntArray(2).also { zone.root.getLocationOnScreen(it) }
-        // Layout position (unaffected by the circle's scale animation)
-        return Pair(
-            rootLoc[0] + circle.left + circle.width / 2f,
-            rootLoc[1] + circle.top + circle.height / 2f
-        )
-    }
-
-    /**
-     * One drag step for a bubble window, with the delete-zone MAGNET.
-     * [desiredX]/[desiredY] = where the finger wants the window (params coordinates);
-     * [offsetX]/[offsetY] = on-screen position − params position (measured at drag start);
-     * [bubbleSizePx] = the visible bubble size (for the ring). Returns true while magnetized.
-     */
-    private fun dragWithMagnet(
-        rootView: View,
-        params: WindowManager.LayoutParams,
-        desiredX: Int, desiredY: Int,
-        offsetX: Int, offsetY: Int,
-        bubbleSizePx: Int,
-        hapticView: View?
-    ): Boolean {
-        val center = deleteCircleCenterOnScreen()
-        val w = params.width
-        val h = params.height
-        val wasMagnetized = isOverDeleteZone
-
-        val magnetized = if (center == null || !isDeleteZoneVisible) false else {
-            // Distance on SCREEN between the bubble centre (at the finger position) and the circle
-            val bx = desiredX + offsetX + w / 2f
-            val by = desiredY + offsetY + h / 2f
-            val dist = kotlin.math.hypot(bx - center.first, by - center.second)
-            dist <= deleteMagnetRadiusDp * resources.displayMetrics.density
-        }
-
-        if (magnetized && center != null) {
-            if (!wasMagnetized) {
-                // Enter: snap the bubble centre onto the circle centre (~120ms), ring + haptic
-                val targetX = (center.first - offsetX - w / 2f).toInt()
-                val targetY = (center.second - offsetY - h / 2f).toInt()
-                val fromX = params.x
-                val fromY = params.y
-                deleteMagnetAnimator?.cancel()
-                deleteMagnetAnimator = ValueAnimator.ofFloat(0f, 1f).apply {
-                    duration = 120
-                    interpolator = android.view.animation.DecelerateInterpolator()
-                    addUpdateListener {
-                        val p = it.animatedValue as Float
-                        params.x = (fromX + (targetX - fromX) * p).toInt()
-                        params.y = (fromY + (targetY - fromY) * p).toInt()
-                        try {
-                            windowManager.updateViewLayout(rootView, params)
-                        } catch (_: Exception) {
-                        }
-                    }
-                    start()
-                }
-                setDeleteCircleRing(bubbleSizePx, ring = true)
-                hapticView?.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS)
-            }
-            // While inside the radius the bubble stays on the circle centre
-        } else {
-            if (wasMagnetized) {
-                // Exit: follow the finger again, circle grows back with ✕
-                deleteMagnetAnimator?.cancel()
-                setDeleteCircleRing(bubbleSizePx, ring = false)
-            }
-            params.x = desiredX
-            params.y = desiredY
-            try {
-                windowManager.updateViewLayout(rootView, params)
-            } catch (e: Exception) {
-                Log.e(TAG, "Error updating layout during drag", e)
-            }
-        }
-        isOverDeleteZone = magnetized
-        return magnetized
-    }
-
-    /** ring=true: circle shrinks to bubble size + 12dp (dark ring), ✕ fades out. */
-    private fun setDeleteCircleRing(bubbleSizePx: Int, ring: Boolean) {
-        val zone = deleteZoneBinding ?: return
-        val full = deleteCircleSizeDp * resources.displayMetrics.density
-        val ringSize = bubbleSizePx + 12f * resources.displayMetrics.density
-        val scale = if (ring) (ringSize / full).coerceAtMost(1f) else 1f
-        zone.deleteCircle.animate().cancel()
-        zone.deleteCircle.animate().scaleX(scale).scaleY(scale).setDuration(120)
-            .setInterpolator(android.view.animation.DecelerateInterpolator()).start()
-        zone.ivDelete.animate().cancel()
-        zone.ivDelete.animate().alpha(if (ring) 0f else 1f).setDuration(120).start()
-    }
-
-    /** Release while magnetized: bubble shrinks + fades (150ms), then [onRemoved]. */
-    private fun animateBubbleRemoval(bubble: View, onRemoved: () -> Unit) {
-        try {
-            bubble.animate().cancel()
-            bubble.animate().scaleX(0f).scaleY(0f).alpha(0f).setDuration(150)
-                .withEndAction { onRemoved() }.start()
-        } catch (e: Exception) {
-            onRemoved()
-        }
-    }
-
-
-    private fun screenOffsetOf(root: View, params: WindowManager.LayoutParams): Pair<Int, Int> {
-        val loc = IntArray(2).also { root.getLocationOnScreen(it) }
-        return Pair(loc[0] - params.x, loc[1] - params.y)
-    }
+    // ============ DELETE ZONE (XRecorder style, with magnet) ============
+    // Shared with DrawingService's bubble — see BubbleDeleteZone.
+    private val deleteZone by lazy { BubbleDeleteZone(this, windowManager, mainHandler) }
 
     private fun updateScreenshotButtonAppearance(isDanger: Boolean) {
         screenshotBinding?.btnScreenshot?.let { button ->
@@ -970,7 +752,8 @@ class SSViewService : Service() {
             buttonSizePx,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else WindowManager.LayoutParams.TYPE_PHONE,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
@@ -978,7 +761,7 @@ class SSViewService : Service() {
             y = 100
         }
 
-        ensureDeleteZoneWindow()   // delete zone must sit BELOW the bubble (window order)
+        deleteZone.ensureWindow()   // delete zone must sit BELOW the bubble (window order)
 
         try {
             windowManager.addView(binding.rootContainer, params)
@@ -1419,7 +1202,7 @@ class SSViewService : Service() {
                         if (abs(deltaX) > 10 || abs(deltaY) > 10) {
                             if (!isDragging) {
                                 // On-screen vs params offset of this window (for the magnet)
-                                val off = screenOffsetOf(toolboxBinding!!.rootContainer, toolboxParams!!)
+                                val off = deleteZone.screenOffsetOf(toolboxBinding!!.rootContainer, toolboxParams!!)
                                 offsetX = off.first
                                 offsetY = off.second
                             }
@@ -1427,8 +1210,8 @@ class SSViewService : Service() {
                             isDragging = true
 
                             // Show delete zone when dragging starts
-                            if (!isDeleteZoneVisible) {
-                                showDeleteZone()
+                            if (!deleteZone.isVisible) {
+                                deleteZone.show()
                             }
 
                             // Collapse if expanded while dragging
@@ -1446,7 +1229,7 @@ class SSViewService : Service() {
 
                         if (isDragging) {
                             // Follow the finger, or stick to the delete circle (magnet)
-                            isOverToolboxDeleteZone = dragWithMagnet(
+                            isOverToolboxDeleteZone = deleteZone.dragWithMagnet(
                                 rootView = toolboxBinding!!.rootContainer,
                                 params = toolboxParams!!,
                                 desiredX = initialX + deltaX.toInt(),
@@ -1461,13 +1244,13 @@ class SSViewService : Service() {
                     }
 
                     MotionEvent.ACTION_UP -> {
-                        hideDeleteZone()
+                        deleteZone.hide()
 
                         if (hasMoved) {
                             if (isOverToolboxDeleteZone) {
                                 // Magnetized on the ✕: shrink + fade, then the existing removal
                                 isOverToolboxDeleteZone = false
-                                animateBubbleRemoval(toolboxBinding!!.btnMain) {
+                                deleteZone.animateBubbleRemoval(toolboxBinding!!.btnMain) {
                                     hideToolbox()
                                     isToolboxVisible = false
                                     checkShouldStopService()
@@ -1494,6 +1277,18 @@ class SSViewService : Service() {
                             v.performClick()
                             return false
                         }
+                    }
+
+                    MotionEvent.ACTION_CANCEL -> {
+                        // Gesture taken away: hide the delete zone, no delete
+                        deleteZone.hide()
+                        if (hasMoved && toolboxBinding != null && toolboxParams != null) snapToEdge()
+                        updateToolboxButtonAppearance(false)
+                        isOverToolboxDeleteZone = false
+                        isDragging = false
+                        hasMoved = false
+                        scheduleBubbleDim()
+                        return true
                     }
                 }
                 return false
@@ -1851,7 +1646,7 @@ class SSViewService : Service() {
         try {
             currentAnimator?.cancel()
             hideFloatingButton()
-            removeDeleteZoneWindow()
+            deleteZone.removeWindow()
             hideToolbox()
         } catch (e: Exception) {
             Log.e(TAG, "Error in onDestroy", e)

@@ -40,52 +40,33 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
+        <!-- 4 matching controls: 40dp touch area, 26dp orange circle, 14dp white icon.
+             The circle's 7dp transparent inset is the gap to the preview corner. -->
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/setting"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_margin="10dp"
-            android:background="@drawable/shape_button"
-            android:padding="4dp"
-            android:src="@drawable/ic_settings"
-            android:tint="@color/white"
+            style="@style/FacecamControlButton"
+            android:src="@drawable/ic_facecam_shape"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/hide_camera"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_margin="10dp"
-            android:background="@drawable/shape_button"
-            android:padding="4dp"
-            android:src="@drawable/baseline_close"
-            android:tint="@color/white"
+            style="@style/FacecamControlButton"
+            android:src="@drawable/ic_close"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/switch_camera"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_margin="10dp"
-            android:background="@drawable/shape_button"
-            android:padding="4dp"
+            style="@style/FacecamControlButton"
             android:src="@drawable/ic_cs"
-            android:tint="@color/white"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
-
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/overlayResize"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_margin="10dp"
-            android:background="@drawable/shape_button"
-            android:padding="4dp"
-            android:src="@drawable/ic_arrows"
+            style="@style/FacecamControlButton"
+            android:src="@drawable/ic_facecam_resize"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
 

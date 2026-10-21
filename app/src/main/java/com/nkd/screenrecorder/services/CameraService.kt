@@ -91,7 +91,9 @@ class CameraService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        if (!isRunning) {
+        // isRunning only turns true once the camera has opened — also skip while the window is
+        // already added (camera still opening), or a second tap adds a second, orphaned window.
+        if (!isRunning && !isWindowViewAdded) {
             // Create a notification for the foreground service
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 startForeground(1, createNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA)
@@ -211,8 +213,7 @@ class CameraService : Service() {
                     })
                 hideCamera.setOnClickListener {
                     if (isWindowViewAdded) {
-                        mWindowManager.removeViewImmediate(cameraViewBinding.root)
-                        isWindowViewAdded = false
+                        removeCameraWindow()
                     }
                     cameraView.close()
                     facecamState = FacecamState.IDLE
@@ -286,7 +287,9 @@ class CameraService : Service() {
 
                 params = WindowManager.LayoutParams(
                     values.bigCameraX, values.bigCameraY,
-                    if (Build.VERSION.SDK_INT < 26) 2002 else 2038, 8, -3
+                    if (Build.VERSION.SDK_INT < 26) 2002 else 2038,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                    -3
                 )
                 params.gravity = Gravity.TOP or Gravity.START
                 params.x = xPos
@@ -413,25 +416,29 @@ class CameraService : Service() {
             // Reposition buttons to be inside the circle
             // Calculate inset needed: for a circle, corner distance = radius * sqrt(2) ≈ radius * 1.414
             // To keep buttons inside, we need to move them inward by approximately: (radius - radius/1.414)
-            val inset = (currentSize * 0.15f).toInt() // ~15% inset from edges
+            // ~15% inset from edges, but never so much that two 40dp buttons on one side
+            // overlap (inner width = window − 2 × 7dp root padding).
+            val density = resources.displayMetrics.density
+            val inner = currentSize - (14 * density).toInt()
+            val inset = min((currentSize * 0.15f).toInt(), max(0, (inner - (80 * density).toInt()) / 2))
 
             (setting.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(5 + inset, 5 + inset, 5, 5)
+                setMargins(inset, inset, 0, 0)
             }
             setting.requestLayout()
 
             (hideCamera.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(5, 5 + inset, 5 + inset, 5)
+                setMargins(0, inset, inset, 0)
             }
             hideCamera.requestLayout()
 
             (switchCamera.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(5 + inset, 5, 5, 5 + inset)
+                setMargins(inset, 0, 0, inset)
             }
             switchCamera.requestLayout()
 
             (overlayResize.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(5, 5, 5 + inset, 5 + inset)
+                setMargins(0, 0, inset, inset)
             }
             overlayResize.requestLayout()
         }
@@ -448,24 +455,24 @@ class CameraService : Service() {
             cameraView.outlineProvider = null
             cameraView.clipToOutline = false
 
-            // Reset button positions to original corners
+            // Reset button positions to the corners (the 8dp gap is the button background's inset)
             (setting.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(5, 5, 5, 5)
+                setMargins(0, 0, 0, 0)
             }
             setting.requestLayout()
 
             (hideCamera.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(5, 5, 5, 5)
+                setMargins(0, 0, 0, 0)
             }
             hideCamera.requestLayout()
 
             (switchCamera.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(5, 5, 5, 5)
+                setMargins(0, 0, 0, 0)
             }
             switchCamera.requestLayout()
 
             (overlayResize.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(5, 5, 5, 5)
+                setMargins(0, 0, 0, 0)
             }
             overlayResize.requestLayout()
         }
@@ -631,16 +638,21 @@ class CameraService : Service() {
                         val dx = (motionEvent.rawX - initialTouchX).toInt()
                         val dy = (motionEvent.rawY - initialTouchY).toInt()
 
+                        // Lower limit: 200px, or 110dp if bigger — the smallest size where the
+                        // four 40dp corner buttons still fit without overlapping.
+                        val minSize = max(200, (110 * resources.displayMetrics.density).roundToInt())
+                        val maxSize = max(800, minSize)
+
                         if (isCircleMode) {
                             // Use bigger delta for smooth scaling
                             val newSize = max(initialWidth + dx, initialHeight + dy)
 
-                            params.width = newSize.coerceIn(200, 800)
-                            params.height = newSize.coerceIn(200, 800)
+                            params.width = newSize.coerceIn(minSize, maxSize)
+                            params.height = newSize.coerceIn(minSize, maxSize)
 
                         } else {
-                            params.width = (initialWidth + dx).coerceIn(200, 800)
-                            params.height = (initialHeight + dy).coerceIn(200, 800)
+                            params.width = (initialWidth + dx).coerceIn(minSize, maxSize)
+                            params.height = (initialHeight + dy).coerceIn(minSize, maxSize)
                         }
 
                         try {
@@ -669,13 +681,24 @@ class CameraService : Service() {
         preferences.edit { putBoolean(PREFS_TOOLS_CAMERA, false) }
         if (cameraViewBinding != null) {
             if (isWindowViewAdded) {
-                mWindowManager.removeView(cameraViewBinding.root)
-                isWindowViewAdded = false
+                removeCameraWindow()
             }
             cameraViewBinding.cameraView.close()
             cameraViewBinding.cameraView.destroy()
         }
         Log.e("FloatingCameraService", " OnDestroy $isRunning")
+    }
+
+    /** Removes the facecam window if it is attached; never throws. */
+    private fun removeCameraWindow() {
+        try {
+            if (cameraViewBinding.root.isAttachedToWindow) {
+                mWindowManager.removeViewImmediate(cameraViewBinding.root)
+            }
+        } catch (e: Exception) {
+            Log.w("CameraService", "Facecam window already removed: ${e.message}")
+        }
+        isWindowViewAdded = false
     }
 
     inner class Values {
