@@ -149,17 +149,23 @@
             android:textSize="11dp" />
     </LinearLayout>
 
-    <!-- Live recording timer after Tools. A Chronometer driven by RemoteViews.setChronometer():
-         the system ticks it itself, the notification is NOT reposted every second.
-         (ImageView for the dot: a plain View is not allowed in RemoteViews.) -->
+    <!-- Live recording timer after Tools, in a small pill card. A Chronometer driven by
+         RemoteViews.setChronometer(): the system ticks it itself, the notification is NOT
+         reposted every second. (ImageView for the dot: a plain View is not allowed in
+         RemoteViews.) Paused: card/dot drawables swapped in NotificationPanel. -->
     <LinearLayout
         android:id="@+id/timerGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/notif_timer_margin_start"
         android:layout_marginEnd="@dimen/notif_timer_margin_end"
+        android:background="@drawable/bg_notif_timer_card"
         android:gravity="center_vertical"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/notif_timer_card_padding_h"
+        android:paddingTop="@dimen/notif_timer_card_padding_v"
+        android:paddingEnd="@dimen/notif_timer_card_padding_h"
+        android:paddingBottom="@dimen/notif_timer_card_padding_v">
 
         <ImageView
             android:id="@+id/recTimerDot"
@@ -174,6 +180,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/notif_timer_dot_gap"
+            android:fontFeatureSettings="tnum"
             android:includeFontPadding="false"
             android:maxLines="1"
             android:singleLine="true"

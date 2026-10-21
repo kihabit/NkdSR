@@ -134,6 +134,15 @@ object NotificationPanel {
                 R.id.recTimer,
                 ContextCompat.getColor(context, if (paused) R.color.primaryColor else R.color.white)
             )
+            // Paused: orange dot + orange card border
+            setImageViewResource(
+                R.id.recTimerDot,
+                if (paused) R.drawable.bg_notif_rec_dot_paused else R.drawable.bg_notif_rec_dot
+            )
+            setInt(
+                R.id.timerGroup, "setBackgroundResource",
+                if (paused) R.drawable.bg_notif_timer_card_paused else R.drawable.bg_notif_timer_card
+            )
             setAppIconClick(context)
             val loc = LocaleHelper.wrap(context)
             setLabel(loc, R.id.labelPause, R.id.iconPause, R.string.notif_pause)

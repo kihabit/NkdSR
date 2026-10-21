@@ -1,17 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Facecam window buttons: 40dp touch area, 26dp visible orange circle (7dp transparent inset)
-     with a thin white border. The ripple outline follows the inset oval, so elevation casts a
-     round shadow. -->
+<!-- Facecam window buttons: no background, only a subtle borderless press ripple. -->
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
-    android:color="#40FFFFFF">
-    <item>
-        <inset android:inset="7dp">
-            <shape android:shape="oval">
-                <solid android:color="@color/primaryColor" />
-                <stroke
-                    android:width="1.5dp"
-                    android:color="@color/white" />
-            </shape>
-        </inset>
-    </item>
-</ripple>
+    android:color="#33FFFFFF"
+    android:radius="20dp" />

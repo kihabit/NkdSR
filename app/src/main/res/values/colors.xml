@@ -64,4 +64,7 @@
     <color name="notif_rec_dot">#FFFF3B30</color>
     <!-- "Recommended" tag background (soft orange) in the recording options sheet -->
     <color name="recommended_tag_bg">#26FF7700</color>
+    <!-- Recording notification timer card (the panel is always dark: #1E1E1E) -->
+    <color name="notif_timer_card_bg">#24FFFFFF</color>
+    <color name="notif_timer_card_border">#33FFFFFF</color>
 </resources>

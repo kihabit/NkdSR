@@ -75,6 +75,10 @@ class MainActivity : BaseActivity() {
     private var isFacecamStartPending = false
 
     companion object {
+        /** Toolbox → Facecam with CAMERA/overlay missing: run the facecam permission flow. */
+        const val EXTRA_START_FACECAM = "extra_start_facecam"
+        /** The user really denied CAMERA at least once (a dismissed dialog doesn't count). */
+        private const val KEY_FACECAM_CAMERA_DENIED_ONCE = "facecam_camera_denied_once"
         const val KEY_DIRECTORY_URI = "directory_uri"
         private const val KEY_NOTIFICATION_PERMISSION_ASKED = "notification_permission_asked"
     }
@@ -129,16 +133,22 @@ class MainActivity : BaseActivity() {
     private val cameraPermissionsLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
+                preference.edit { remove(KEY_FACECAM_CAMERA_DENIED_ONCE) }
                 startFacecamIfPermitted()
             } else {
                 isFacecamStartPending = false
+                changeFaceCameBackground(false, binding.faceCameIcon)
                 if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
+                    // A real deny (rationale only becomes true after one)
+                    preference.edit { putBoolean(KEY_FACECAM_CAMERA_DENIED_ONCE, true) }
                     Toast.makeText(
                         this, getString(R.string.facecam_camera_permission_required), Toast.LENGTH_SHORT
                     ).show()
-                } else {
+                } else if (preference.getBoolean(KEY_FACECAM_CAMERA_DENIED_ONCE, false)) {
+                    // Denied before AND no rationale now → "don't ask again" / permanently denied
                     showFacecamCameraPermissionSettingsDialog()
                 }
+                // else: dialog dismissed without a choice — nothing to do, the next tap asks again
             }
         }
 
@@ -152,6 +162,10 @@ class MainActivity : BaseActivity() {
             startFacecamIfPermitted()
         } else {
             isFacecamStartPending = false
+            changeFaceCameBackground(false, binding.faceCameIcon)
+            Toast.makeText(
+                this, getString(R.string.facecam_overlay_permission_required), Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -395,6 +409,11 @@ class MainActivity : BaseActivity() {
             return
         }
 
+        if (savedInstanceState == null && consumeStartFacecamExtra(intent)) {
+            startFacecamIfPermitted()   // asks for overlay / CAMERA itself, then starts
+            return
+        }
+
         if (!Settings.canDrawOverlays(this)) {
             val alertBuilder = AlertDialog.Builder(this)
                 .setTitle(getString(R.string.overlay_permission_title))
@@ -477,6 +496,7 @@ class MainActivity : BaseActivity() {
             .setCancelable(false)
             .setPositiveButton(getString(R.string.grant)) { dialog, _ ->
                 dialog.dismiss()
+                cancelOverlayCheck()   // its restart must not interrupt the facecam flow
                 facecamOverlayPermissionLauncher.launch(
                     Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:$packageName".toUri())
                 )
@@ -533,19 +553,52 @@ class MainActivity : BaseActivity() {
         return false
     }
 
-    private fun checkForOverlayPermission() {
-        val handler = Handler(Looper.getMainLooper())
-        handler.postDelayed(object : Runnable {
-            override fun run() {
-                if (Settings.canDrawOverlays(this@MainActivity)) {
-                    // (No longer forces "Countdown before start" ON — the user's choice stays.)
-                    startActivity(Intent(this@MainActivity, MainActivity::class.java))
-                    finish()
-                } else {
-                    handler.postDelayed(this, 150)
-                }
+    /** Startup overlay prompt → re-check every 150ms until granted, then restart once. */
+    private val overlayCheckHandler = Handler(Looper.getMainLooper())
+    private val overlayCheckRunnable = object : Runnable {
+        override fun run() {
+            if (isFacecamStartPending) {
+                // The facecam flow handles overlay itself — never restart under it
+                cancelOverlayCheck()
+                return
             }
-        }, 500)
+            if (Settings.canDrawOverlays(this@MainActivity)) {
+                cancelOverlayCheck()
+                // (No longer forces "Countdown before start" ON — the user's choice stays.)
+                startActivity(Intent(this@MainActivity, MainActivity::class.java))
+                finish()
+            } else {
+                overlayCheckHandler.postDelayed(this, 150)
+            }
+        }
+    }
+
+    private fun checkForOverlayPermission() {
+        cancelOverlayCheck()
+        overlayCheckHandler.postDelayed(overlayCheckRunnable, 500)
+    }
+
+    private fun cancelOverlayCheck() {
+        overlayCheckHandler.removeCallbacks(overlayCheckRunnable)
+    }
+
+    /** Toolbox asked for the facecam (CAMERA/overlay missing): true once, extra removed. */
+    private fun consumeStartFacecamExtra(intent: Intent?): Boolean {
+        if (intent?.getBooleanExtra(EXTRA_START_FACECAM, false) != true) return false
+        intent.removeExtra(EXTRA_START_FACECAM)
+        return true
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        if (consumeStartFacecamExtra(intent) && !isFacecamStartPending) {
+            startFacecamIfPermitted()
+        }
+    }
+
+    override fun onDestroy() {
+        cancelOverlayCheck()
+        super.onDestroy()
     }
 
     private fun checkPermissionsAndStart() {

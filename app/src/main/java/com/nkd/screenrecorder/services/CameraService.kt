@@ -17,6 +17,8 @@ import android.content.pm.ServiceInfo
 import android.graphics.Outline
 import android.os.Build
 import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
 import android.os.IBinder
 import android.util.Log
 import android.view.ContextThemeWrapper
@@ -40,6 +42,7 @@ import com.nkd.screenrecorder.fragments.SettingFragment
 import com.otaliastudios.cameraview.CameraException
 import com.otaliastudios.cameraview.CameraListener
 import com.otaliastudios.cameraview.CameraOptions
+import com.otaliastudios.cameraview.controls.Audio
 import com.otaliastudios.cameraview.controls.Facing
 import kotlin.math.abs
 import kotlin.math.max
@@ -64,6 +67,17 @@ class CameraService : Service() {
      *  Only used internally to avoid duplicate open()/report-ready work; not surfaced as UI. */
     private enum class FacecamState { IDLE, OPENING_CAMERA, PREVIEW_READY, FAILED }
     private var facecamState: FacecamState = FacecamState.IDLE
+
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    /** The camera must report onCameraOpened within this time, or the attempt has failed. */
+    private val CAMERA_OPEN_TIMEOUT_MS = 5_000L
+    private val cameraOpenTimeout = Runnable {
+        if (facecamState == FacecamState.OPENING_CAMERA) {
+            Log.e("CameraService", "Camera did not open within ${CAMERA_OPEN_TIMEOUT_MS}ms")
+            failFacecam(R.string.facecam_open_failed)
+        }
+    }
 
     companion object {
         var isRunning: Boolean = false
@@ -94,15 +108,16 @@ class CameraService : Service() {
         // isRunning only turns true once the camera has opened — also skip while the window is
         // already added (camera still opening), or a second tap adds a second, orphaned window.
         if (!isRunning && !isWindowViewAdded) {
-            // Create a notification for the foreground service
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                startForeground(1, createNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA)
+            // CAMERA first: on Android 14+ a camera-type startForeground() without it throws.
+            // (Callers — Home and the toolbox — already make sure it is granted.)
+            if (!hasCameraPermission()) {
+                failFacecam(R.string.facecam_camera_permission_required)
+                return START_NOT_STICKY
             }
-//            else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                startForeground(1, createNotification())
-//            } else {
-//                startForeground(1, createNotification())
-//            }
+            if (!startForegroundCompat()) {
+                failFacecam(R.string.facecam_open_failed)
+                return START_NOT_STICKY
+            }
 
             // ✅ A bare Service context does not reliably resolve the app's AppCompat/
             // MaterialComponents theme attributes (e.g. windowActionBar) for widgets
@@ -165,6 +180,7 @@ class CameraService : Service() {
                             // failed (onCameraError → FAILED): only act while we're actually
                             // still in the "camera opening" phase we requested.
                             if (facecamState != FacecamState.OPENING_CAMERA) return
+                            mainHandler.removeCallbacks(cameraOpenTimeout)
                             facecamState = FacecamState.PREVIEW_READY
                             Log.d("CameraService", "Camera opened (facing=$facing)")
                             isRunning = true
@@ -185,33 +201,13 @@ class CameraService : Service() {
                                 "Camera failed to open (facing=$facing): ${exception.message}",
                                 exception
                             )
-                            facecamState = FacecamState.FAILED
-                            isRunning = false
-                            android.widget.Toast.makeText(
-                                this@CameraService,
-                                getString(R.string.facecam_open_failed),
-                                android.widget.Toast.LENGTH_SHORT
-                            ).show()
-                            if (isWindowViewAdded) {
-                                try {
-                                    mWindowManager.removeViewImmediate(cameraViewBinding.root)
-                                } catch (_: Exception) {
-                                }
-                                isWindowViewAdded = false
-                            }
-                            try {
-                                cameraView.close()
-                            } catch (_: Exception) {
-                            }
-                            val stateIntent = Intent(PREFS_TOOLS_CAMERA)
-                            stateIntent.putExtra("is_running", false)
-                            stateIntent.setPackage(packageName)
-                            sendBroadcast(stateIntent)
-                            stopForeground(STOP_FOREGROUND_REMOVE)
-                            stopSelf()
+                            // Already failed, or closed by the user → nothing left to tear down
+                            if (facecamState == FacecamState.FAILED || facecamState == FacecamState.IDLE) return
+                            failFacecam(R.string.facecam_open_failed)
                         }
                     })
                 hideCamera.setOnClickListener {
+                    mainHandler.removeCallbacks(cameraOpenTimeout)
                     if (isWindowViewAdded) {
                         removeCameraWindow()
                     }
@@ -322,6 +318,10 @@ class CameraService : Service() {
                         // ✅ Guard against opening twice if onStartCommand were somehow
                         // re-entered (e.g. a stray duplicate start intent) while a previous
                         // open() is still pending.
+                        // Preview only — never records video/audio, so it must not need
+                        // RECORD_AUDIO (CameraView's default Audio.ON silently blocked open()).
+                        cameraView.audio = Audio.OFF
+                        mainHandler.postDelayed(cameraOpenTimeout, CAMERA_OPEN_TIMEOUT_MS)
                         if (!cameraView.isOpened()) {
                             try {
                                 cameraView.open()
@@ -338,18 +338,7 @@ class CameraService : Service() {
                         // actually opened, not merely once the window is attached and open()
                         // has been requested.
                     } else {
-                        isRunning = false
-                        android.widget.Toast.makeText(
-                            this@CameraService,
-                            getString(R.string.facecam_open_failed),
-                            android.widget.Toast.LENGTH_SHORT
-                        ).show()
-                        val intent = Intent(PREFS_TOOLS_CAMERA)
-                        intent.putExtra("is_running", false)
-                        intent.setPackage(packageName)
-                        sendBroadcast(intent)
-                        stopForeground(STOP_FOREGROUND_REMOVE)
-                        stopSelf()
+                        failFacecam(R.string.facecam_open_failed)
                     }
                 } else {
                     // ✅ Recoverable state: nothing was actually opened (no window, no camera) —
@@ -365,22 +354,50 @@ class CameraService : Service() {
                         if (!hasOverlayPermission) "Overlay permission not granted — stopping facecam"
                         else "Camera permission not granted — stopping facecam"
                     )
-                    isRunning = false
-                    android.widget.Toast.makeText(
-                        this@CameraService,
-                        getString(missingReasonRes),
-                        android.widget.Toast.LENGTH_SHORT
-                    ).show()
-                    val intent = Intent(PREFS_TOOLS_CAMERA)
-                    intent.putExtra("is_running", false)
-                    intent.setPackage(packageName)
-                    sendBroadcast(intent)
-                    stopForeground(STOP_FOREGROUND_REMOVE)
-                    stopSelf()
+                    failFacecam(missingReasonRes)
                 }
             }
         }
-        return START_STICKY
+        // Not sticky: a facecam must never be restarted from the background after the app
+        // was killed (Android 12+ blocks that anyway).
+        return START_NOT_STICKY
+    }
+
+    /** Foreground on every API level (started with startForegroundService on 8+). Camera
+     *  type from Android 11 (API 30); before that the plain call. False if it failed. */
+    private fun startForegroundCompat(): Boolean = try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            startForeground(1, createNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_CAMERA)
+        } else {
+            startForeground(1, createNotification())
+        }
+        true
+    } catch (e: Exception) {
+        Log.e("CameraService", "startForeground failed", e)
+        false
+    }
+
+    /**
+     * Failed attempt (no permission, window not added, camera error, or no onCameraOpened in
+     * time): remove the window, close the camera, report is_running=false, stop. Resets the
+     * window-added guard, so the next tap starts a fresh attempt.
+     */
+    private fun failFacecam(messageRes: Int) {
+        mainHandler.removeCallbacks(cameraOpenTimeout)
+        facecamState = FacecamState.FAILED
+        isRunning = false
+        if (isWindowViewAdded) removeCameraWindow()
+        isWindowViewAdded = false
+        if (::cameraViewBinding.isInitialized) {
+            try {
+                cameraViewBinding.cameraView.close()
+            } catch (_: Exception) {
+            }
+        }
+        android.widget.Toast.makeText(this, getString(messageRes), android.widget.Toast.LENGTH_SHORT).show()
+        sendBroadcast(Intent(PREFS_TOOLS_CAMERA).putExtra("is_running", false).setPackage(packageName))
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
     }
 
     fun setCircleMode() {
@@ -675,11 +692,12 @@ class CameraService : Service() {
     }
 
     override fun onDestroy() {
+        mainHandler.removeCallbacks(cameraOpenTimeout)
         isRunning = false
         facecamState = FacecamState.IDLE
         super.onDestroy()
         preferences.edit { putBoolean(PREFS_TOOLS_CAMERA, false) }
-        if (cameraViewBinding != null) {
+        if (::cameraViewBinding.isInitialized) {
             if (isWindowViewAdded) {
                 removeCameraWindow()
             }

@@ -1465,8 +1465,17 @@ class SSViewService : Service() {
                 }
             }
             switchForFaceCame.setOnCheckedChangeListener { buttonView, isChecked ->
+                if (syncingFacecamSwitch) return@setOnCheckedChangeListener
                 toolboxDialog.dismiss()
-                if (isChecked) {
+                if (isChecked && !hasFacecamPermissions()) {
+                    // Missing CAMERA or overlay: don't start the service — the app's facecam
+                    // flow asks for them and then starts it. The switch stays off until the
+                    // facecam really opens (re-read from CameraService.isRunning).
+                    syncingFacecamSwitch = true
+                    buttonView.isChecked = false
+                    syncingFacecamSwitch = false
+                    openAppFacecamFlow()
+                } else if (isChecked) {
                     val intent = Intent(this@SSViewService, CameraService::class.java)
                     // ✅ Default to the front camera — no saved facing preference exists yet.
                     // This used to hardcode facing=1 (back), always opening the rear camera.
@@ -1576,9 +1585,51 @@ class SSViewService : Service() {
             setGravity(Gravity.CENTER)
         }
         toolboxDialog.setCancelable(true)
-        toolboxDialog.setOnDismissListener { onDismiss?.invoke() }
+        // Facecam switch follows the real state (opened / failed / closed) while showing
+        val facecamStateReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                syncingFacecamSwitch = true
+                dialogBinding.switchForFaceCame.isChecked = CameraService.isRunning
+                syncingFacecamSwitch = false
+            }
+        }
+        androidx.core.content.ContextCompat.registerReceiver(
+            this, facecamStateReceiver, IntentFilter(CameraService.PREFS_TOOLS_CAMERA),
+            androidx.core.content.ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+        toolboxDialog.setOnDismissListener {
+            try {
+                unregisterReceiver(facecamStateReceiver)
+            } catch (_: Exception) {
+            }
+            onDismiss?.invoke()
+        }
         toolboxDialog.show()
 
+    }
+
+    /** True while the facecam switch is set from code (not by the user). */
+    private var syncingFacecamSwitch = false
+
+    private fun hasFacecamPermissions(): Boolean =
+        androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED &&
+                (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this))
+
+    /** Bring the app to the front and run its facecam permission flow (it starts the facecam). */
+    private fun openAppFacecamFlow() {
+        try {
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    )
+                    .putExtra(MainActivity.EXTRA_START_FACECAM, true)
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening the facecam permission flow", e)
+        }
     }
 
     private fun handleGifAction() {

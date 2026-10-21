@@ -27,7 +27,8 @@
             app:cameraFacing="front"
             app:cameraFlash="auto"
             app:cameraPreview="texture"
-            app:cameraRequestPermissions="true" />
+            app:cameraAudio="off"
+            app:cameraRequestPermissions="false" />
     </FrameLayout>
 
 
@@ -40,8 +41,8 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <!-- 4 matching controls: 40dp touch area, 26dp orange circle, 14dp white icon.
-             The circle's 7dp transparent inset is the gap to the preview corner. -->
+        <!-- 4 matching controls: 40dp touch area, 18dp white icon with a soft dark glow,
+             no background (subtle borderless ripple on press). -->
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/setting"
             style="@style/FacecamControlButton"
@@ -52,14 +53,14 @@
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/hide_camera"
             style="@style/FacecamControlButton"
-            android:src="@drawable/ic_close"
+            android:src="@drawable/ic_facecam_close"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/switch_camera"
             style="@style/FacecamControlButton"
-            android:src="@drawable/ic_cs"
+            android:src="@drawable/ic_facecam_switch"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 

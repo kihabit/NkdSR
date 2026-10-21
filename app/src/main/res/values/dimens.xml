@@ -30,9 +30,13 @@
 
     <!-- Recording notification live timer (dp, like the panel labels: the collapsed
          notification has a fixed height, so it must not grow with the font size) -->
-    <dimen name="notif_timer_text_size">16dp</dimen>
+    <dimen name="notif_timer_text_size">15dp</dimen>
     <dimen name="notif_timer_dot_size">8dp</dimen>
-    <dimen name="notif_timer_dot_gap">5dp</dimen>
+    <dimen name="notif_timer_dot_gap">6dp</dimen>
     <dimen name="notif_timer_margin_start">6dp</dimen>
     <dimen name="notif_timer_margin_end">8dp</dimen>
+    <dimen name="notif_timer_card_radius">16dp</dimen>
+    <dimen name="notif_timer_card_padding_h">10dp</dimen>
+    <dimen name="notif_timer_card_padding_v">5dp</dimen>
+    <dimen name="notif_timer_card_border">1dp</dimen>
 </resources>
