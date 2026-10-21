@@ -48,6 +48,7 @@ import com.nkd.screenrecorder.R
 import com.nkd.screenrecorder.activities.MainActivity
 import com.nkd.screenrecorder.databinding.LayoutCountdownBinding
 import com.nkd.screenrecorder.fragments.SettingFragment
+import com.nkd.screenrecorder.utils.VideoQualityPrefs
 import com.nkd.screenrecorder.utils.CropCoordinates
 import com.nkd.screenrecorder.utils.LocaleHelper
 import com.nkd.screenrecorder.utils.NotificationPanel
@@ -72,6 +73,7 @@ class RecordScreenService : Service() {
     private var screenHeight = 1280
     private var screenDensity = 0
     private var frameRate = 30
+    private var videoBitrate = 8_000_000
     private lateinit var preferences: SharedPreferences
     private lateinit var windowManager: WindowManager
     private var mediaRecorder: MediaRecorder? = null
@@ -224,7 +226,6 @@ class RecordScreenService : Service() {
         )
         createNotificationChannel()
         getScreenMetrics()
-        getFrameRate()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -455,6 +456,9 @@ class RecordScreenService : Service() {
             recordingMediaProjection?.registerCallback(recordingMediaProjectionCallback, null)
             Log.d(TAG, "Created MediaProjection for recording")
 
+            // Video quality / frame rate read fresh for EVERY recording (may change any time on
+            // Home, in Settings or the toolbox) — used by MediaRecorder and the VirtualDisplay.
+            getScreenMetrics()
             initRecorder(outputUri)
             createVirtualDisplayForRecording()
 
@@ -509,7 +513,7 @@ class RecordScreenService : Service() {
                     setAudioChannels(2)                 // stereo
                 }
 
-                setVideoEncodingBitRate(getBitrate())
+                setVideoEncodingBitRate(videoBitrate)
                 setVideoFrameRate(frameRate)
                 setOrientationHint(0)
 
@@ -914,11 +918,6 @@ class RecordScreenService : Service() {
 
     // ============ HELPER METHODS ============
 
-    private fun getFrameRate() {
-        // 60 / 50 / 48 / 25 / 24 / 30 (Recommended); old saved values are migrated once
-        frameRate = SettingFragment.frameRateFps(SettingFragment.frameRateIndex(preferences))
-    }
-
     private fun getScreenMetrics() {
         val metrics = DisplayMetrics()
 
@@ -936,38 +935,14 @@ class RecordScreenService : Service() {
             screenDensity = metrics.densityDpi
         }
         Log.e(TAG, "Screen recording Display width $screenWidth height $screenHeight")
-        val videoQualityId = SettingFragment.videoQualityIndex(preferences)   // nothing saved = Original
-        val (scaledW, scaledH) = getScaledSize(videoQualityId)
-        screenWidth = scaledW
-        screenHeight = scaledH
+        // Size (encoder-supported, aspect kept), FPS and bitrate from the saved video quality / frame rate
+        val spec = VideoQualityPrefs.resolve(this, screenWidth, screenHeight)
+        screenWidth = spec.width
+        screenHeight = spec.height
+        frameRate = spec.fps
+        videoBitrate = spec.bitrate
+        Log.d(TAG, "Recording spec ${spec.width}x${spec.height} @${spec.fps}fps ${spec.bitrate}bps")
     }
-
-    private fun getBitrate(): Int {
-        return when (SettingFragment.videoQualityIndex(preferences)) {
-            0 -> 2_000_000   // Low
-            1 -> 4_000_000   // Medium
-            2 -> 6_000_000   // High
-            else -> 8_000_000   // Original
-        }
-    }
-
-    private fun getScaledSize(quality: Int): Pair<Int, Int> {
-        val realW = screenWidth
-        val realH = screenHeight
-
-        val scale = when (quality) {
-            0 -> 0.5f
-            1 -> 0.7f
-            2 -> 0.85f
-            else -> 1f
-        }
-
-        // Round DOWN to a multiple of 16: some H.264 encoders reject odd / unaligned sizes
-        // (e.g. 2340 × 0.85 = 1989).
-        return Pair(alignDown16(realW * scale), alignDown16(realH * scale))
-    }
-
-    private fun alignDown16(size: Float): Int = ((size.toInt() / 16) * 16).coerceAtLeast(16)
 
     private fun updateNotification(text: String) {
         // While recording (or paused) the foreground notification is the RECORDING panel.

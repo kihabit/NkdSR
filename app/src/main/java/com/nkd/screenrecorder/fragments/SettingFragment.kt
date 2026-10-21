@@ -21,6 +21,8 @@ import com.nkd.screenrecorder.activities.MainActivity
 import com.nkd.screenrecorder.databinding.FragmentSettingBinding
 import com.nkd.screenrecorder.services.NotificationPanelService
 import com.nkd.screenrecorder.services.SSViewService
+import com.nkd.screenrecorder.utils.VideoQualityPrefs
+import com.nkd.screenrecorder.utils.RecordingOptionsSheet
 import com.nkd.screenrecorder.utils.DBHelper
 import com.nkd.screenrecorder.utils.DirectoryPreferenceManager
 import com.nkd.screenrecorder.utils.LanguageDialog
@@ -44,63 +46,15 @@ class SettingFragment : Fragment() {
         const val KEEP_RECORDING = "keep_recording"
         const val HIDE_FLOAT_VIEW = "hide_float_view"
         const val AUDIO_SOURCE = "audio_source"
-        const val VIDEO_QUALITY = "video_quality"
-        const val FRAME_RATE = "frame_rate"
         /** "Notification toolbar" (always-on IDLE panel) — default ON. */
         const val NOTIFICATION_TOOLBAR = "notification_toolbar"
-
-        /** R.array.video_resolution: 0 Low (50%) · 1 Medium (70%) · 2 High (85%) · 3 Original (100%). */
-        const val VIDEO_QUALITY_ORIGINAL = 3
 
         /** R.array.audio_source: 0 Mute · 1 Microphone. */
         const val AUDIO_SOURCE_MUTE = 0
         const val AUDIO_SOURCE_MICROPHONE = 1
 
-        /** R.array.video_frame_rate: 0 60 · 1 50 · 2 48 · 3 25 · 4 24 · 5 30 FPS (Recommended). */
-        const val FRAME_RATE_RECOMMENDED = 5
-        /** Set once the saved FRAME_RATE uses the order above (old list had a plain "30 FPS" at 3). */
-        private const val FRAME_RATE_MIGRATED = "frame_rate_v2"
-
-        /**
-         * Saved frame-rate index in the current list; nothing saved → 30 FPS (Recommended).
-         * One-time migration from the old 7-item list (60,50,48,30,25,24,Default):
-         * 0–2 stay, 3 (30) → 5, 4 (25) → 3, 5 (24) → 4, 6 (Default = 30) → 5.
-         */
-        fun frameRateIndex(prefs: SharedPreferences): Int {
-            if (!prefs.getBoolean(FRAME_RATE_MIGRATED, false)) {
-                val migrated = when (val old = prefs.getInt(FRAME_RATE, -1)) {
-                    0, 1, 2 -> old
-                    3, 6 -> FRAME_RATE_RECOMMENDED
-                    4 -> 3
-                    5 -> 4
-                    else -> -1
-                }
-                prefs.edit {
-                    if (migrated == -1) remove(FRAME_RATE) else putInt(FRAME_RATE, migrated)
-                    putBoolean(FRAME_RATE_MIGRATED, true)
-                }
-            }
-            return prefs.getInt(FRAME_RATE, FRAME_RATE_RECOMMENDED)
-                .let { if (it in 0..FRAME_RATE_RECOMMENDED) it else FRAME_RATE_RECOMMENDED }
-        }
-
-        /** Frames per second for an index of R.array.video_frame_rate. */
-        fun frameRateFps(index: Int): Int = when (index) {
-            0 -> 60
-            1 -> 50
-            2 -> 48
-            3 -> 25
-            4 -> 24
-            else -> 30   // 5 = 30 FPS (Recommended)
-        }
-
         const val COUNTDOWN_MIN_SECONDS = 1
         const val COUNTDOWN_MAX_SECONDS = 10
-
-        /** Saved video quality; nothing saved (or an old 4/5 from the previous 6-item list) → Original. */
-        fun videoQualityIndex(prefs: SharedPreferences): Int =
-            prefs.getInt(VIDEO_QUALITY, VIDEO_QUALITY_ORIGINAL)
-                .let { if (it in 0 until VIDEO_QUALITY_ORIGINAL) it else VIDEO_QUALITY_ORIGINAL }
 
         /** Saved audio source; anything but Mute records the microphone
          *  (the old 3rd item "Default" also recorded the mic). */
@@ -181,35 +135,16 @@ class SettingFragment : Fragment() {
 
         binding.apply {
 
-            // ── Video Quality (Low / Medium / High / Original; nothing saved = Original) ──
-            val videoQuality = resources.getStringArray(R.array.video_resolution)
-            selectedVideoQuality.text = videoQuality[videoQualityIndex(preference)]
+            // ── Video Quality + Frame Rate (VideoQualityPrefs — same keys/sheets as Home) ──
+            refreshRecordingOptions()
             val openVideoQuality = View.OnClickListener {
-                AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.select_quality))
-                    .setSingleChoiceItems(R.array.video_resolution, videoQualityIndex(preference)) { dlg, which ->
-                        preference.edit { putInt(VIDEO_QUALITY, which) }
-                        selectedVideoQuality.text = videoQuality[which]
-                        dlg.dismiss()
-                    }.create().show()
+                RecordingOptionsSheet.showVideoQuality(requireContext()) { refreshRecordingOptions() }
             }
             videoQualitySection.setOnClickListener(openVideoQuality)
             selectedVideoQuality.setOnClickListener(openVideoQuality)
 
-            // ── Frame Rate ─────────────────────────────────────────
-            val frameRate = resources.getStringArray(R.array.video_frame_rate)
-            // frameRateIndex(): migrates an old saved value once; nothing saved = 30 FPS (Recommended)
-            // Chip shows the short value ("30 FPS"); "(Recommended)" only in the dialog list
-            val frameRateChip = { i: Int -> if (i == FRAME_RATE_RECOMMENDED) getString(R.string.fps_30_short) else frameRate[i] }
-            frameRateQuality.text = frameRateChip(frameRateIndex(preference))
             val openFrameRate = View.OnClickListener {
-                AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.select_frame_rate))
-                    .setSingleChoiceItems(R.array.video_frame_rate, frameRateIndex(preference)) { dlg, which ->
-                        preference.edit { putInt(FRAME_RATE, which) }
-                        frameRateQuality.text = frameRateChip(which)
-                        dlg.dismiss()
-                    }.create().show()
+                RecordingOptionsSheet.showFrameRate(requireContext()) { refreshRecordingOptions() }
             }
             frameRateSection.setOnClickListener(openFrameRate)
             frameRateQuality.setOnClickListener(openFrameRate)
@@ -326,8 +261,16 @@ class SettingFragment : Fragment() {
         }
     }
 
+    /** Chips: "Auto · 1080p" / "720p" and "Auto · 30 FPS" / "60 FPS". */
+    private fun refreshRecordingOptions() {
+        val b = _binding ?: return
+        b.selectedVideoQuality.text = VideoQualityPrefs.qualitySummary(requireContext())
+        b.frameRateQuality.text = VideoQualityPrefs.frameRateSummary(requireContext())
+    }
+
     override fun onResume() {
         super.onResume()
+        refreshRecordingOptions()   // may have been changed on Home / in the toolbox
         if (isAdded) {
             (requireActivity() as MainActivity).hideTopCardView(false)
             (requireActivity() as MainActivity).hideBottomNavAndFab(false)

@@ -36,4 +36,5 @@
     <color name="storage_dot_available">#FF9CCC65</color>
     <color name="storage_dot_total">#FFE0E0E0</color>
     <color name="storage_low">#FFEF5350</color>
+    <color name="recommended_tag_bg">#33FF7700</color>
 </resources>

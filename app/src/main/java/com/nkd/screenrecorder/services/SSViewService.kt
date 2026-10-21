@@ -52,7 +52,8 @@ import com.nkd.screenrecorder.fragments.SettingFragment
 import com.nkd.screenrecorder.fragments.SettingFragment.Companion.AUDIO_SOURCE
 import com.nkd.screenrecorder.fragments.SettingFragment.Companion.PREFS_NAME
 import com.nkd.screenrecorder.fragments.SettingFragment.Companion.SHOW_COUNT_DOWN
-import com.nkd.screenrecorder.fragments.SettingFragment.Companion.VIDEO_QUALITY
+import com.nkd.screenrecorder.utils.VideoQualityPrefs
+import com.nkd.screenrecorder.utils.RecordingOptionsSheet
 import com.nkd.screenrecorder.utils.BubbleDeleteZone
 import com.nkd.screenrecorder.utils.LocaleHelper
 import com.nkd.screenrecorder.utils.dpToPx
@@ -1512,34 +1513,14 @@ class SSViewService : Service() {
                     toolboxDialog.dismiss()
                 }
             }
-            // Low / Medium / High / Original — nothing saved = Original (same as the service)
-            val videoQuality = resources.getStringArray(R.array.video_resolution)
-            selectedVideoQuality.text = videoQuality[SettingFragment.videoQualityIndex(preference)]
+            // Video quality (VideoQualityPrefs — same key/sheet as Home and Settings)
+            selectedVideoQuality.text = VideoQualityPrefs.qualitySummary(themeContext)
 
             selectVideoQualityCard.setOnClickListener {
-                val alertBuilder2 = AlertDialog.Builder(themeContext).setTitle(getString(R.string.select_quality))
-                    .setSingleChoiceItems(
-                        R.array.video_resolution,
-                        SettingFragment.videoQualityIndex(preference),
-                    ) { dialogInterface, which ->
-                        preference.edit {
-                            putInt(VIDEO_QUALITY, which)
-                        }
-                        selectedVideoQuality.text = videoQuality[which]
-                        dialogInterface.dismiss()
-                        toolboxDialog.dismiss()
-                    }
-                val dialog = alertBuilder2.create()
-
-                dialog.window?.apply {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-                    } else {
-                        setType(WindowManager.LayoutParams.TYPE_PHONE)
-                    }
+                RecordingOptionsSheet.showVideoQuality(themeContext, overlay = true) {
+                    selectedVideoQuality.text = VideoQualityPrefs.qualitySummary(themeContext)
+                    toolboxDialog.dismiss()
                 }
-
-                dialog.show()
             }
 
             // Mute / Microphone — nothing saved = Microphone (same as the service)

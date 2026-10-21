@@ -763,4 +763,10 @@
     <string name="storage_label_available">Disponible</string>
     <string name="storage_label_total">Total</string>
     <string name="storage_low_warning">Stockage faible : les enregistrements peuvent s’arrêter</string>
+    <!-- Video quality / frame rate bottom sheets -->
+    <string name="video_quality_sheet_title">Qualité vidéo</string>
+    <string name="frame_rate_sheet_title">Fréquence d’images</string>
+    <string name="option_auto">Auto</string>
+    <string name="option_recommended">Recommandé</string>
+    <string name="auto_for_this_phone">%1$s pour ce téléphone</string>
 </resources>

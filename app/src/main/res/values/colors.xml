@@ -62,4 +62,6 @@
     <color name="storage_low">#FFE53935</color>
     <!-- Recording notification: red dot before the live timer -->
     <color name="notif_rec_dot">#FFFF3B30</color>
+    <!-- "Recommended" tag background (soft orange) in the recording options sheet -->
+    <color name="recommended_tag_bg">#26FF7700</color>
 </resources>

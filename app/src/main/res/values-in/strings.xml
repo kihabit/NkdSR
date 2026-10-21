@@ -372,4 +372,10 @@
     <string name="storage_label_available">Tersedia</string>
     <string name="storage_label_total">Total</string>
     <string name="storage_low_warning">Penyimpanan hampir penuh: rekaman bisa berhenti</string>
+    <!-- Video quality / frame rate bottom sheets -->
+    <string name="video_quality_sheet_title">Kualitas video</string>
+    <string name="frame_rate_sheet_title">Frame rate</string>
+    <string name="option_auto">Otomatis</string>
+    <string name="option_recommended">Disarankan</string>
+    <string name="auto_for_this_phone">%1$s untuk ponsel ini</string>
 </resources>

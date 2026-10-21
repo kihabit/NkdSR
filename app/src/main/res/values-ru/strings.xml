@@ -375,4 +375,10 @@
     <string name="storage_label_available">Свободно</string>
     <string name="storage_label_total">Всего</string>
     <string name="storage_low_warning">Мало памяти: запись может остановиться</string>
+    <!-- Video quality / frame rate bottom sheets -->
+    <string name="video_quality_sheet_title">Качество видео</string>
+    <string name="frame_rate_sheet_title">Частота кадров</string>
+    <string name="option_auto">Авто</string>
+    <string name="option_recommended">Рекомендуется</string>
+    <string name="auto_for_this_phone">%1$s для этого телефона</string>
 </resources>

@@ -40,9 +40,10 @@ import com.nkd.screenrecorder.adapter.VideoListAdapter
 import com.nkd.screenrecorder.databinding.FragmentVideoBinding
 import com.nkd.screenrecorder.fragments.SettingFragment.Companion.AUDIO_SOURCE
 import com.nkd.screenrecorder.fragments.SettingFragment.Companion.PREFS_NAME
-import com.nkd.screenrecorder.fragments.SettingFragment.Companion.VIDEO_QUALITY
 import com.nkd.screenrecorder.model.VideoItem
 import com.nkd.screenrecorder.services.RecordScreenService
+import com.nkd.screenrecorder.utils.VideoQualityPrefs
+import com.nkd.screenrecorder.utils.RecordingOptionsSheet
 import com.nkd.screenrecorder.utils.StorageDetailsDialog
 import com.nkd.screenrecorder.utils.Utils
 import com.nkd.screenrecorder.utils.VideoBottomSheetDialog
@@ -94,25 +95,12 @@ class VideoFragment : Fragment(), MenuProvider {
         videoViewModel = ViewModelProvider(this)[VideoViewModel::class.java]
 
         binding.apply {
-            // Low / Medium / High / Original — nothing saved = Original (same as the service)
-            val videoQuality = resources.getStringArray(R.array.video_resolution)
-            videoQualityValue.text = videoQuality[SettingFragment.videoQualityIndex(preference)]
+            // Video quality (VideoQualityPrefs — same key/sheet as Settings): "Auto · 1080p" …
+            videoQualityValue.text = VideoQualityPrefs.homeSummary(requireContext())
             videoQualityCard.setOnClickListener {
-                val alertBuilder = AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.select_quality))
-                    .setSingleChoiceItems(
-                        R.array.video_resolution,
-                        SettingFragment.videoQualityIndex(preference),
-                    ) { dialogInterface, which ->
-                        preference.edit {
-                            putInt(VIDEO_QUALITY, which)
-                        }
-                        videoQualityValue.text = videoQuality[which]
-                        dialogInterface.dismiss()
-
-                    }
-                val dialog = alertBuilder.create()
-                dialog.show()
+                RecordingOptionsSheet.showVideoQuality(requireContext()) {
+                    _binding?.videoQualityValue?.text = VideoQualityPrefs.homeSummary(requireContext())
+                }
             }
             // Mute / Microphone — nothing saved = Microphone (same as the service)
             val audioSources = resources.getStringArray(R.array.audio_source)
@@ -338,6 +326,8 @@ class VideoFragment : Fragment(), MenuProvider {
     @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onResume() {
         super.onResume()
+        // May have been changed in Settings / the toolbox
+        _binding?.videoQualityValue?.text = VideoQualityPrefs.homeSummary(requireContext())
         fetchVideos()
         val filter = IntentFilter(RecordScreenService.NEW_RECORDING_ADDED)
 

@@ -376,4 +376,10 @@
     <string name="storage_label_available">المتاح</string>
     <string name="storage_label_total">الإجمالي</string>
     <string name="storage_low_warning">مساحة التخزين منخفضة: قد تتوقف التسجيلات</string>
+    <!-- Video quality / frame rate bottom sheets -->
+    <string name="video_quality_sheet_title">جودة الفيديو</string>
+    <string name="frame_rate_sheet_title">معدل الإطارات</string>
+    <string name="option_auto">تلقائي</string>
+    <string name="option_recommended">موصى به</string>
+    <string name="auto_for_this_phone">%1$s لهذا الهاتف</string>
 </resources>
