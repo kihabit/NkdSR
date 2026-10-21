@@ -13,8 +13,6 @@ import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import android.util.Log
 import android.view.MenuItem
@@ -50,6 +48,7 @@ import com.nkd.screenrecorder.utils.StorageDetailsDialog
 import com.nkd.screenrecorder.utils.LanguageDialog
 import com.nkd.screenrecorder.utils.LocaleHelper
 import com.nkd.screenrecorder.utils.NotificationPanel
+import com.nkd.screenrecorder.utils.OverlayPermissionHelper
 import com.nkd.screenrecorder.utils.PrefsHelper
 import com.nkd.screenrecorder.utils.Utils
 import java.text.SimpleDateFormat
@@ -152,22 +151,9 @@ class MainActivity : BaseActivity() {
             }
         }
 
-    /** Returning from the "draw over other apps" Settings screen for Face Cam. The result
-     *  code from ACTION_MANAGE_OVERLAY_PERMISSION is unreliable across OEMs, so the real
-     *  permission state is what decides whether to resume the pending start. */
-    private val facecamOverlayPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) {
-        if (Settings.canDrawOverlays(this)) {
-            startFacecamIfPermitted()
-        } else {
-            isFacecamStartPending = false
-            changeFaceCameBackground(false, binding.faceCameIcon)
-            Toast.makeText(
-                this, getString(R.string.facecam_overlay_permission_required), Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
+    /** Every trip to "Display over other apps" (startup, facecam, screenshot, toolbox, drawing):
+     *  comes back by itself as soon as the switch is on, then continues the pending action. */
+    private val overlayPermission = OverlayPermissionHelper(this)
 
     /** Returning from the app's own Settings page (routed here only after CAMERA was
      *  permanently denied) — resume the pending start if the user granted it there. */
@@ -344,18 +330,19 @@ class MainActivity : BaseActivity() {
                 }
             }
             if (!SSViewService.isScreenshotButtonVisible) {
-                if (!ensureOverlayPermission()) return@setOnClickListener
-                // Show screenshot floating button
-                val intent = Intent(this, SSViewService::class.java).apply {
-                    action = SSViewService.ACTION_SHOW_SCREENSHOT_BUTTON
-                }
+                withOverlayPermission(onDenied = { changeScreenshotBackground(false) }) {
+                    // Show screenshot floating button
+                    val intent = Intent(this, SSViewService::class.java).apply {
+                        action = SSViewService.ACTION_SHOW_SCREENSHOT_BUTTON
+                    }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(intent)
-                } else {
-                    startService(intent)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(intent)
+                    } else {
+                        startService(intent)
+                    }
+                    changeScreenshotBackground(true)
                 }
-                changeScreenshotBackground(true)
             } else {
                 // Hide screenshot floating button
                 val intent = Intent(this, SSViewService::class.java).apply {
@@ -368,17 +355,18 @@ class MainActivity : BaseActivity() {
 
         binding.btnVideo.setOnClickListener {
             if (!SSViewService.isToolboxVisible) {
-                if (!ensureOverlayPermission()) return@setOnClickListener
-                val intent = Intent(this, SSViewService::class.java).apply {
-                    action = SSViewService.ACTION_SHOW_TOOLBOX
-                }
+                withOverlayPermission(onDenied = { changeFaceCameBackground(false, binding.toolBoxImage) }) {
+                    val intent = Intent(this, SSViewService::class.java).apply {
+                        action = SSViewService.ACTION_SHOW_TOOLBOX
+                    }
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    startForegroundService(intent)
-                } else {
-                    startService(intent)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        startForegroundService(intent)
+                    } else {
+                        startService(intent)
+                    }
+                    changeFaceCameBackground(true, binding.toolBoxImage)
                 }
-                changeFaceCameBackground(true, binding.toolBoxImage)
             } else {
 
                 val intent = Intent(this, SSViewService::class.java).apply {
@@ -391,10 +379,12 @@ class MainActivity : BaseActivity() {
 
         binding.btnDrawing.setOnClickListener {
             if (!DrawingService.isRunning) {
-                val intent = Intent(this, DrawingService::class.java)
-                intent.action = DrawingService.ACTION_SHOW_BRUSH
-                startService(intent)
-                changeFaceCameBackground(true, binding.drawingImage)
+                withOverlayPermission(onDenied = { changeFaceCameBackground(false, binding.drawingImage) }) {
+                    val intent = Intent(this, DrawingService::class.java)
+                    intent.action = DrawingService.ACTION_SHOW_BRUSH
+                    startService(intent)
+                    changeFaceCameBackground(true, binding.drawingImage)
+                }
             } else {
                 val intent = Intent(this, DrawingService::class.java)
                 intent.action = DrawingService.ACTION_HIDE_BRUSH
@@ -420,13 +410,17 @@ class MainActivity : BaseActivity() {
                 .setMessage(getString(R.string.overlay_permission_message))
                 .setCancelable(false)
                 .setPositiveButton(getString(R.string.grant)) { dialog, which ->
-                    val intent = Intent(
-                        Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                        "package:$packageName".toUri()
-                    )
-                    startActivity(intent)
-                    checkForOverlayPermission()
                     dialog.dismiss()
+                    // Comes back by itself once granted (no restart); then the directory step
+                    overlayPermission.request(
+                        onGranted = { askDirectoryIfNeeded() },
+                        onDenied = {
+                            Toast.makeText(
+                                this, getString(R.string.overlay_permission_message), Toast.LENGTH_LONG
+                            ).show()
+                            askDirectoryIfNeeded()
+                        }
+                    )
                 }.setNegativeButton(getString(R.string.deny)) { dialog, which ->
                     dialog.dismiss()
                     askDirectoryIfNeeded()
@@ -496,9 +490,15 @@ class MainActivity : BaseActivity() {
             .setCancelable(false)
             .setPositiveButton(getString(R.string.grant)) { dialog, _ ->
                 dialog.dismiss()
-                cancelOverlayCheck()   // its restart must not interrupt the facecam flow
-                facecamOverlayPermissionLauncher.launch(
-                    Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:$packageName".toUri())
+                overlayPermission.request(
+                    onGranted = { startFacecamIfPermitted() },   // → CAMERA next, then starts
+                    onDenied = {
+                        isFacecamStartPending = false
+                        changeFaceCameBackground(false, binding.faceCameIcon)
+                        Toast.makeText(
+                            this, getString(R.string.facecam_overlay_permission_required), Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 )
             }
             .setNegativeButton(getString(R.string.deny)) { dialog, _ ->
@@ -539,47 +539,19 @@ class MainActivity : BaseActivity() {
     }
 
     /**
-     * The floating toolbox is an overlay window — guard it with the same "draw over other
-     * apps" check used at startup, since the permission can be revoked at any time after
-     * this activity was created (e.g. from system Settings) without this activity knowing.
-     * Returns true only when the overlay can safely be added right now.
+     * Floating windows (screenshot button, toolbox, drawing) need "draw over other apps", which
+     * can be revoked at any time. Granted → [action] now; otherwise the user is sent to Settings,
+     * brought back automatically once it's on, and [action] then runs. Not granted on return →
+     * the "permission needed" message and [onDenied] (switch back off).
      */
-    private fun ensureOverlayPermission(): Boolean {
-        if (Settings.canDrawOverlays(this)) return true
-        Toast.makeText(this, getString(R.string.overlay_permission_message), Toast.LENGTH_LONG).show()
-        startActivity(
-            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, "package:$packageName".toUri())
+    private fun withOverlayPermission(onDenied: () -> Unit, action: () -> Unit) {
+        overlayPermission.request(
+            onGranted = action,
+            onDenied = {
+                Toast.makeText(this, getString(R.string.overlay_permission_message), Toast.LENGTH_LONG).show()
+                onDenied()
+            }
         )
-        return false
-    }
-
-    /** Startup overlay prompt → re-check every 150ms until granted, then restart once. */
-    private val overlayCheckHandler = Handler(Looper.getMainLooper())
-    private val overlayCheckRunnable = object : Runnable {
-        override fun run() {
-            if (isFacecamStartPending) {
-                // The facecam flow handles overlay itself — never restart under it
-                cancelOverlayCheck()
-                return
-            }
-            if (Settings.canDrawOverlays(this@MainActivity)) {
-                cancelOverlayCheck()
-                // (No longer forces "Countdown before start" ON — the user's choice stays.)
-                startActivity(Intent(this@MainActivity, MainActivity::class.java))
-                finish()
-            } else {
-                overlayCheckHandler.postDelayed(this, 150)
-            }
-        }
-    }
-
-    private fun checkForOverlayPermission() {
-        cancelOverlayCheck()
-        overlayCheckHandler.postDelayed(overlayCheckRunnable, 500)
-    }
-
-    private fun cancelOverlayCheck() {
-        overlayCheckHandler.removeCallbacks(overlayCheckRunnable)
     }
 
     /** Toolbox asked for the facecam (CAMERA/overlay missing): true once, extra removed. */
@@ -594,11 +566,6 @@ class MainActivity : BaseActivity() {
         if (consumeStartFacecamExtra(intent) && !isFacecamStartPending) {
             startFacecamIfPermitted()
         }
-    }
-
-    override fun onDestroy() {
-        cancelOverlayCheck()
-        super.onDestroy()
     }
 
     private fun checkPermissionsAndStart() {

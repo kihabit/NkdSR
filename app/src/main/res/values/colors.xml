@@ -67,4 +67,8 @@
     <!-- Recording notification timer card (the panel is always dark: #1E1E1E) -->
     <color name="notif_timer_card_bg">#24FFFFFF</color>
     <color name="notif_timer_card_border">#33FFFFFF</color>
+    <!-- Facecam shape sheet (FacecamShapeSheet) -->
+    <color name="facecam_shape_preview_bg">#FFE4E4E4</color>
+    <color name="facecam_shape_preview_icon">#FF8A8A8A</color>
+    <color name="facecam_shape_card_stroke">#FFD6D6D6</color>
 </resources>

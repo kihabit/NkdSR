@@ -4,7 +4,6 @@ import com.nkd.screenrecorder.utils.LocaleHelper
 import android.content.Context
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.AlertDialog
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -36,7 +35,7 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import com.nkd.screenrecorder.R
 import com.nkd.screenrecorder.activities.MainActivity
-import com.nkd.screenrecorder.databinding.DialogCameraServiceSettingBinding
+import com.nkd.screenrecorder.utils.FacecamShapeSheet
 import com.nkd.screenrecorder.databinding.LayoutFloatingCameraViewBinding
 import com.nkd.screenrecorder.fragments.SettingFragment
 import com.otaliastudios.cameraview.CameraException
@@ -48,6 +47,7 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 class CameraService : Service() {
 
@@ -85,6 +85,11 @@ class CameraService : Service() {
 
         const val PREFS_CAMERA_OVERLAY_POS = "camera_overlay_pos"
         const val PREFS_TOOLS_CAMERA: String = "tools_camera"
+        /** Saved facecam shape: true = circle, false/missing = rounded rectangle. */
+        private const val PREFS_FACECAM_CIRCLE = "facecam_shape_circle"
+        private const val RECT_CORNER_DP = 16
+        /** Smallest circle where the 4 buttons on the diagonals don't overlap (see layoutButtonsForCircle). */
+        private const val CIRCLE_MIN_DP = 124
 
         /** Intent extra selecting the initial camera. No saved user preference exists for this
          *  yet, so every caller should pass [FACING_FRONT] (or omit the extra — [FACING_FRONT]
@@ -234,47 +239,12 @@ class CameraService : Service() {
                     }
                 }
                 setting.setOnClickListener {
-
-                    // Same bare-Service-context theme-resolution issue as the main overlay
-                    // (see themedContext above) — this dialog's layout also uses
-                    // AppCompatImageView for its two mode icons.
-                    val dialogThemedContext = ContextThemeWrapper(this@CameraService, R.style.Theme_NkdSR)
-                    val cameraSettingBinding = DialogCameraServiceSettingBinding.inflate(
-                        LayoutInflater.from(dialogThemedContext), null, false
-                    )
-                    val alertBuilder = AlertDialog.Builder(dialogThemedContext)
-                        .setView(cameraSettingBinding.root)
-                        .create()
-                    if (isCircleMode) {
-                        cameraSettingBinding.circleImage.setColorFilter(resources.getColor(R.color.primaryColor))
-                        cameraSettingBinding.rectangleImage.setColorFilter(resources.getColor(R.color.black))
-                        cameraSettingBinding.circleTextView.setTextColor(resources.getColor(R.color.primaryColor))
-                        cameraSettingBinding.rectangleTextView.setTextColor(resources.getColor(R.color.black))
-                        cameraSettingBinding.circleImage.isSelected = true
-                        cameraSettingBinding.rectangleImage.isSelected = false
-                    } else {
-                        cameraSettingBinding.circleImage.isSelected = false
-                        cameraSettingBinding.rectangleImage.isSelected = true
-                        cameraSettingBinding.circleImage.setColorFilter(resources.getColor(R.color.black))
-                        cameraSettingBinding.rectangleImage.setColorFilter(resources.getColor(R.color.primaryColor))
-                        cameraSettingBinding.circleTextView.setTextColor(resources.getColor(R.color.black))
-                        cameraSettingBinding.rectangleTextView.setTextColor(resources.getColor(R.color.primaryColor))
+                    // Themed context: a bare Service context can't resolve the Material theme
+                    val sheetContext = ContextThemeWrapper(this@CameraService, R.style.Theme_NkdSR)
+                    FacecamShapeSheet.show(sheetContext, isCircleMode) { circle ->
+                        if (circle) setCircleMode() else applyRectangleMode()
+                        preferences.edit { putBoolean(PREFS_FACECAM_CIRCLE, circle) }
                     }
-                    alertBuilder.window?.setType(
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-                            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-                        else
-                            WindowManager.LayoutParams.TYPE_PHONE
-                    )
-                    cameraSettingBinding.rectangleImage.setOnClickListener {
-                        applyRectangleMode()
-                        alertBuilder.dismiss()
-                    }
-                    cameraSettingBinding.circleImage.setOnClickListener {
-                        setCircleMode()
-                        alertBuilder.dismiss()
-                    }
-                    alertBuilder.show()
                 }
                 values = Values()
 
@@ -314,6 +284,9 @@ class CameraService : Service() {
 
                     if (windowAdded) {
                         isWindowViewAdded = true
+                        // Restore the last chosen shape (rectangle by default)
+                        if (preferences.getBoolean(PREFS_FACECAM_CIRCLE, false)) setCircleMode()
+                        else applyRectangleMode()
                         facecamState = FacecamState.OPENING_CAMERA
                         // ✅ Guard against opening twice if onStartCommand were somehow
                         // re-entered (e.g. a stray duplicate start intent) while a previous
@@ -400,98 +373,117 @@ class CameraService : Service() {
         stopSelf()
     }
 
+    private val density get() = resources.displayMetrics.density
+
+    /** Largest facecam window side while resizing (also caps the shape switch). */
+    private fun maxWindowSize(): Int = max(800, (CIRCLE_MIN_DP * density).roundToInt())
+
+    /** Perfect circle: square window (≥ [CIRCLE_MIN_DP]), oval clip, buttons on the diagonals. */
     fun setCircleMode() {
         isCircleMode = true
 
-        // Force square dimensions for perfect circle
-        val currentSize = min(params.width, params.height)
-        params.width = currentSize
-        params.height = currentSize
+        val size = max(min(params.width, params.height), (CIRCLE_MIN_DP * density).roundToInt())
+            .coerceAtMost(maxWindowSize())
+        params.width = size
+        params.height = size
+        keepOnScreenAndUpdate()
 
-        try {
-            mWindowManager.updateViewLayout(cameraViewBinding.root, params)
-        } catch (_: Exception) {
-        }
-
-        cameraViewBinding.apply {
-            // Apply circle clipping to camera frame
-            cameraFrameLayout.outlineProvider = object : ViewOutlineProvider() {
-                override fun getOutline(view: View, outline: Outline) {
-                    outline.setOval(0, 0, view.width, view.height)
-                }
+        // CameraView with fixed (match_parent) sides center-crops the preview → fills the circle
+        clipFrame(object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                val side = min(view.width, view.height)
+                outline.setOval(0, 0, side, side)
             }
-            cameraFrameLayout.clipToOutline = true
-
-            // Apply circle clipping to camera view
-            cameraView.outlineProvider = object : ViewOutlineProvider() {
-                override fun getOutline(view: View, outline: Outline) {
-                    outline.setOval(0, 0, view.width, view.height)
-                }
-            }
-            cameraView.clipToOutline = true
-
-            // Reposition buttons to be inside the circle
-            // Calculate inset needed: for a circle, corner distance = radius * sqrt(2) ≈ radius * 1.414
-            // To keep buttons inside, we need to move them inward by approximately: (radius - radius/1.414)
-            // ~15% inset from edges, but never so much that two 40dp buttons on one side
-            // overlap (inner width = window − 2 × 7dp root padding).
-            val density = resources.displayMetrics.density
-            val inner = currentSize - (14 * density).toInt()
-            val inset = min((currentSize * 0.15f).toInt(), max(0, (inner - (80 * density).toInt()) / 2))
-
-            (setting.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(inset, inset, 0, 0)
-            }
-            setting.requestLayout()
-
-            (hideCamera.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(0, inset, inset, 0)
-            }
-            hideCamera.requestLayout()
-
-            (switchCamera.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(inset, 0, 0, inset)
-            }
-            switchCamera.requestLayout()
-
-            (overlayResize.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(0, 0, inset, inset)
-            }
-            overlayResize.requestLayout()
-        }
+        })
+        layoutButtonsForCircle(size)
     }
 
+    /** Rounded rectangle (16dp corners) in the facecam's 3:4 shape, buttons in the corners. */
     fun applyRectangleMode() {
         isCircleMode = false
 
+        // Coming from a circle (square window): restore the 3:4 shape from the current width
+        if (params.width == params.height) {
+            params.height = (params.width.toLong() * values.bigCameraY / values.bigCameraX).toInt()
+                .coerceAtMost(maxWindowSize())
+        }
+        keepOnScreenAndUpdate()
+
+        val radius = RECT_CORNER_DP * density
+        clipFrame(object : ViewOutlineProvider() {
+            override fun getOutline(view: View, outline: Outline) {
+                outline.setRoundRect(0, 0, view.width, view.height, radius)
+            }
+        })
         cameraViewBinding.apply {
-            // Remove circle clipping
-            cameraFrameLayout.outlineProvider = null
-            cameraFrameLayout.clipToOutline = false
-
-            cameraView.outlineProvider = null
-            cameraView.clipToOutline = false
-
-            // Reset button positions to the corners (the 8dp gap is the button background's inset)
-            (setting.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(0, 0, 0, 0)
+            listOf(setting, hideCamera, switchCamera, overlayResize).forEach { button ->
+                (button.layoutParams as ConstraintLayout.LayoutParams).setMargins(0, 0, 0, 0)
+                button.requestLayout()
             }
-            setting.requestLayout()
+        }
+    }
 
-            (hideCamera.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(0, 0, 0, 0)
-            }
-            hideCamera.requestLayout()
+    /** Smooth (anti-aliased) clip of the preview frame and the camera view to [provider]. */
+    private fun clipFrame(provider: ViewOutlineProvider) {
+        cameraViewBinding.apply {
+            cameraFrameLayout.outlineProvider = provider
+            cameraFrameLayout.clipToOutline = true
+            cameraView.outlineProvider = provider
+            cameraView.clipToOutline = true
+            cameraFrameLayout.invalidateOutline()
+            cameraView.invalidateOutline()
+        }
+    }
 
-            (switchCamera.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(0, 0, 0, 0)
-            }
-            switchCamera.requestLayout()
+    /**
+     * Circle mode: each 40dp button sits on its diagonal, its centre 24dp inside the circle's
+     * edge — never in the clipped corners. At [CIRCLE_MIN_DP] two buttons on a side are still
+     * ≥ 40dp apart, so they never overlap.
+     */
+    private fun layoutButtonsForCircle(windowSize: Int) {
+        val inner = windowSize - 14 * density             // window − 2 × 7dp root padding
+        val radius = inner / 2f
+        val alongDiagonal = (radius - 24 * density).coerceAtLeast(0f)
+        val axisOffset = alongDiagonal / sqrt(2f)
+        val margin = (radius - axisOffset - 20 * density).roundToInt().coerceAtLeast(0)
+        cameraViewBinding.apply {
+            (setting.layoutParams as ConstraintLayout.LayoutParams).setMargins(margin, margin, 0, 0)
+            (hideCamera.layoutParams as ConstraintLayout.LayoutParams).setMargins(0, margin, margin, 0)
+            (switchCamera.layoutParams as ConstraintLayout.LayoutParams).setMargins(margin, 0, 0, margin)
+            (overlayResize.layoutParams as ConstraintLayout.LayoutParams).setMargins(0, 0, margin, margin)
+            listOf(setting, hideCamera, switchCamera, overlayResize).forEach { it.requestLayout() }
+        }
+    }
 
-            (overlayResize.layoutParams as ConstraintLayout.LayoutParams).apply {
-                setMargins(0, 0, 0, 0)
+    /** Keeps the top-left position, only pulled back so the whole window is on screen. */
+    private fun keepOnScreenAndUpdate() {
+        val (screenW, screenH) = usableScreenSize()
+        params.x = params.x.coerceIn(0, max(0, screenW - params.width))
+        params.y = params.y.coerceIn(0, max(0, screenH - params.height))
+        persistCoordinates(params.x, params.y)
+        if (isWindowViewAdded) {
+            try {
+                mWindowManager.updateViewLayout(cameraViewBinding.root, params)
+            } catch (_: Exception) {
             }
-            overlayResize.requestLayout()
+        }
+    }
+
+    /** Area an overlay window can use (screen minus the system bars). */
+    private fun usableScreenSize(): Pair<Int, Int> {
+        val wm = getSystemService(WINDOW_SERVICE) as WindowManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val metrics = wm.currentWindowMetrics
+            val bars = metrics.windowInsets.getInsetsIgnoringVisibility(
+                android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout()
+            )
+            Pair(
+                metrics.bounds.width() - bars.left - bars.right,
+                metrics.bounds.height() - bars.top - bars.bottom
+            )
+        } else {
+            val dm = resources.displayMetrics
+            Pair(dm.widthPixels, dm.heightPixels - (24 * density).roundToInt())
         }
     }
 
@@ -658,14 +650,14 @@ class CameraService : Service() {
                         // Lower limit: 200px, or 110dp if bigger — the smallest size where the
                         // four 40dp corner buttons still fit without overlapping.
                         val minSize = max(200, (110 * resources.displayMetrics.density).roundToInt())
-                        val maxSize = max(800, minSize)
+                        val maxSize = maxWindowSize()
 
                         if (isCircleMode) {
-                            // Use bigger delta for smooth scaling
-                            val newSize = max(initialWidth + dx, initialHeight + dy)
-
-                            params.width = newSize.coerceIn(minSize, maxSize)
-                            params.height = newSize.coerceIn(minSize, maxSize)
+                            // One size for both sides → always a perfect circle (bigger delta = smooth)
+                            val circleMin = max(minSize, (CIRCLE_MIN_DP * density).roundToInt())
+                            val newSize = max(initialWidth + dx, initialHeight + dy).coerceIn(circleMin, maxSize)
+                            params.width = newSize
+                            params.height = newSize
 
                         } else {
                             params.width = (initialWidth + dx).coerceIn(minSize, maxSize)
@@ -677,9 +669,9 @@ class CameraService : Service() {
                         } catch (_: Exception) {
                         }
 
-                        // Reapply circle mask because size changed
+                        // The oval/rounded clip follows the size by itself; circle buttons move with it
                         if (isCircleMode) {
-                            setCircleMode()
+                            layoutButtonsForCircle(params.width)
                         }
 
                         return true

@@ -788,4 +788,6 @@
     <string name="option_auto">ऑटो</string>
     <string name="option_recommended">सुझाया गया</string>
     <string name="auto_for_this_phone">इस फ़ोन के लिए %1$s</string>
+    <string name="overlay_permission_hint">सूची में Screen Rec ढूंढें और इसे चालू करें</string>
+    <string name="facecam_shape_title">फेसकैम का आकार</string>
 </resources>

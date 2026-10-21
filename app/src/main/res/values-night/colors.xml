@@ -37,4 +37,8 @@
     <color name="storage_dot_total">#FFE0E0E0</color>
     <color name="storage_low">#FFEF5350</color>
     <color name="recommended_tag_bg">#33FF7700</color>
+    <!-- Facecam shape sheet (FacecamShapeSheet) - dark system theme -->
+    <color name="facecam_shape_preview_bg">#FF3A3A3A</color>
+    <color name="facecam_shape_preview_icon">#FFA0A0A0</color>
+    <color name="facecam_shape_card_stroke">#FF4A4A4A</color>
 </resources>

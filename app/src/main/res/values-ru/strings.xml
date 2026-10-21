@@ -381,4 +381,6 @@
     <string name="option_auto">Авто</string>
     <string name="option_recommended">Рекомендуется</string>
     <string name="auto_for_this_phone">%1$s для этого телефона</string>
+    <string name="overlay_permission_hint">Найдите Screen Rec в списке и включите его</string>
+    <string name="facecam_shape_title">Форма фронтальной камеры</string>
 </resources>

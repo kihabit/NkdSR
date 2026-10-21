@@ -380,4 +380,6 @@
     <string name="option_auto">Automático</string>
     <string name="option_recommended">Recomendado</string>
     <string name="auto_for_this_phone">%1$s para este celular</string>
+    <string name="overlay_permission_hint">Encontre o Screen Rec na lista e ative-o</string>
+    <string name="facecam_shape_title">Formato da câmera facial</string>
 </resources>

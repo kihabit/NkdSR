@@ -382,4 +382,6 @@
     <string name="option_auto">تلقائي</string>
     <string name="option_recommended">موصى به</string>
     <string name="auto_for_this_phone">%1$s لهذا الهاتف</string>
+    <string name="overlay_permission_hint">ابحث عن Screen Rec في القائمة وقم بتفعيله</string>
+    <string name="facecam_shape_title">شكل الكاميرا الأمامية</string>
 </resources>

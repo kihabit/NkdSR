@@ -781,4 +781,6 @@
     <string name="quality_p_value" translatable="false">%1$dp</string>
     <string name="fps_value" translatable="false">%1$d FPS</string>
     <string name="option_summary" translatable="false">%1$s · %2$s</string>
+    <string name="overlay_permission_hint">Find Screen Rec in the list and turn it on</string>
+    <string name="facecam_shape_title">Facecam shape</string>
 </resources>
