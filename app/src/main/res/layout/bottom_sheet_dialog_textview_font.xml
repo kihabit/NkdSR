@@ -1,0 +1,394 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/textEditorPanel"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#1E1E1E"
+    android:paddingBottom="10dp">
+
+    <!-- ✅ Pill-shaped text input, no floating label — small keyboard-toggle icon on its
+         right edge. Sits directly above the keyboard once the panel is shown. -->
+    <FrameLayout
+        android:id="@+id/inputPillContainer"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="12dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/bg_text_input_pill"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <EditText
+            android:id="@+id/enterTextEditText"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginStart="18dp"
+            android:layout_marginEnd="44dp"
+            android:background="@android:color/transparent"
+            android:gravity="center_vertical|start"
+            android:hint="@string/enter_text"
+            android:imeOptions="actionDone"
+            android:inputType="text"
+            android:maxLines="1"
+            android:textColor="@color/white"
+            android:textColorHint="#99FFFFFF" />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/ivKeyboardToggle"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_gravity="center_vertical|end"
+            android:layout_marginEnd="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:padding="7dp"
+            app:srcCompat="@drawable/ic_text"
+            app:tint="@color/white" />
+
+    </FrameLayout>
+
+    <!-- ✅ Text / Color / Font / Label tab row — underline shows which one is active -->
+    <LinearLayout
+        android:id="@+id/tabRow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:orientation="horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/inputPillContainer">
+
+        <LinearLayout
+            android:id="@+id/tabTextContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="10dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="10dp">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivTabText"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                app:srcCompat="@drawable/ic_text"
+                app:tint="@color/white" />
+
+            <View
+                android:id="@+id/tabTextUnderline"
+                android:layout_width="20dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="4dp"
+                android:background="@color/primaryColor" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tabColorContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="10dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="10dp">
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/ivTabColor"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                app:srcCompat="@drawable/colors_svgrepo_com" />
+
+            <View
+                android:id="@+id/tabColorUnderline"
+                android:layout_width="20dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="4dp"
+                android:background="@color/primaryColor"
+                android:visibility="invisible" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tabFontContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="10dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="10dp">
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/ivTabFont"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:gravity="center"
+                android:text="Aa"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <View
+                android:id="@+id/tabFontUnderline"
+                android:layout_width="20dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="4dp"
+                android:background="@color/primaryColor"
+                android:visibility="invisible" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tabLabelContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="10dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="10dp">
+
+            <FrameLayout
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center">
+
+                <View
+                    android:id="@+id/ivTabLabel"
+                    android:layout_width="22dp"
+                    android:layout_height="15dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_label_tab_icon" />
+
+            </FrameLayout>
+
+            <View
+                android:id="@+id/tabLabelUnderline"
+                android:layout_width="20dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="4dp"
+                android:background="@color/primaryColor"
+                android:visibility="invisible" />
+
+        </LinearLayout>
+
+        <!-- 5th tab: label shape + opacity -->
+        <LinearLayout
+            android:id="@+id/tabLabelStyleContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="10dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="10dp">
+
+            <FrameLayout
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center">
+
+                <View
+                    android:id="@+id/ivTabLabelStyle"
+                    android:layout_width="22dp"
+                    android:layout_height="15dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/bg_label_shape_tab_icon" />
+
+            </FrameLayout>
+
+            <View
+                android:id="@+id/tabLabelStyleUnderline"
+                android:layout_width="20dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="4dp"
+                android:background="@color/primaryColor"
+                android:visibility="invisible" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- ✅ Confirm (tick) — right end of the tab row, vertically centered on it -->
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/btnTextDone"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="12dp"
+        android:background="@drawable/circle_bg_white"
+        android:contentDescription="@null"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="@id/tabRow"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/tabRow"
+        app:srcCompat="@drawable/ic_check"
+        app:tint="@color/primaryColor" />
+
+    <!-- ✅ Color swatches row — visible only when the color-wheel tab is active -->
+    <HorizontalScrollView
+        android:id="@+id/colorSwatchScroll"
+        android:layout_width="0dp"
+        android:layout_height="44dp"
+        android:layout_marginTop="6dp"
+        android:clipToPadding="false"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:scrollbars="none"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tabRow">
+
+        <LinearLayout
+            android:id="@+id/colorSwatchRow"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal" />
+
+    </HorizontalScrollView>
+
+    <!-- ✅ Font name previews row — visible only when the "Aa" tab is active -->
+    <HorizontalScrollView
+        android:id="@+id/fontPreviewScroll"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="6dp"
+        android:clipToPadding="false"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:scrollbars="none"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tabRow">
+
+        <LinearLayout
+            android:id="@+id/fontPreviewRow"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal" />
+
+    </HorizontalScrollView>
+
+    <!-- ✅ Label color swatches — visible only when the label (4th) tab is active -->
+    <LinearLayout
+        android:id="@+id/labelOptionsContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tabRow">
+
+        <HorizontalScrollView
+            android:id="@+id/labelSwatchScroll"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:clipToPadding="false"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/labelSwatchRow"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal" />
+
+        </HorizontalScrollView>
+
+    </LinearLayout>
+
+    <!-- ✅ Label shape row + opacity slider — visible only when the label-style (5th) tab is active -->
+    <LinearLayout
+        android:id="@+id/labelStyleContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tabRow">
+
+        <!-- Label shapes: None / Filled / Rounded / Pill / Outline / Outline rounded / Dashed -->
+        <HorizontalScrollView
+            android:id="@+id/labelShapeScroll"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:clipToPadding="false"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/labelShapeRow"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:orientation="horizontal" />
+
+        </HorizontalScrollView>
+
+        <!-- Label opacity 0–100% -->
+        <LinearLayout
+            android:id="@+id/labelOpacityRow"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/label_opacity"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+
+            <SeekBar
+                android:id="@+id/labelOpacitySeekBar"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="100" />
+
+            <TextView
+                android:id="@+id/labelOpacityValue"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                tools:text="100%"
+                android:textColor="@color/white"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

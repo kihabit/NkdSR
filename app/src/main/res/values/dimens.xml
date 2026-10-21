@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spacing -->
+    <dimen name="spacing_extra_small">6dp</dimen>
+    <dimen name="spacing_small">8dp</dimen>
+    <dimen name="spacing_medium">16dp</dimen>
+
+    <!-- Text Sizes -->
+    <dimen name="text_title">24sp</dimen>
+    <dimen name="text_small">12sp</dimen>
+
+    <!-- Icon & Button Sizes -->
+    <dimen name="icon_size">32dp</dimen>
+    <dimen name="corner_radius">16dp</dimen>
+
+    <!-- FAB -->
+    <dimen name="fab_size">72dp</dimen>
+    <dimen name="fab_icon_size">32dp</dimen>
+    <dimen name="fab_margin_bottom">36dp</dimen>
+</resources>

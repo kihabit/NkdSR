@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- IDLE notification toolbar (Android 12+): no app icon (the system template shows it).
+     FIXED cells (no RemoteViews.addView — that duplicated the buttons on Android 9 when the
+     notification was re-applied). Labels use dp on purpose: the collapsed notification has a
+     fixed height, so they must not grow with the system font size. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/panelRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_notification_panel"
+    android:gravity="center_vertical"
+    android:minHeight="44dp"
+    android:orientation="horizontal"
+    android:paddingStart="4dp"
+    android:paddingTop="3dp"
+    android:paddingEnd="4dp"
+    android:paddingBottom="3dp">
+
+    <LinearLayout
+        android:id="@+id/cellRecord"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconRecord"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@string/notif_record"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_notif_record" />
+
+        <TextView
+            android:id="@+id/labelRecord"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="@string/notif_record"
+            android:textColor="#FFFFFFFF"
+            android:textSize="11dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cellCapture"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconCapture"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@string/notif_screenshot_short"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_notif_screenshot" />
+
+        <TextView
+            android:id="@+id/labelCapture"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="@string/notif_screenshot_short"
+            android:textColor="#FFFFFFFF"
+            android:textSize="11dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cellTools"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconTools"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@string/notif_tools"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_notif_tools" />
+
+        <TextView
+            android:id="@+id/labelTools"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="@string/notif_tools"
+            android:textColor="#FFFFFFFF"
+            android:textSize="11dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cellHome"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconHome"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@string/notif_home"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_notif_home" />
+
+        <TextView
+            android:id="@+id/labelHome"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="@string/notif_home"
+            android:textColor="#FFFFFFFF"
+            android:textSize="11dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cellExit"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconExit"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@string/notif_exit"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_notif_exit" />
+
+        <TextView
+            android:id="@+id/labelExit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="@string/notif_exit"
+            android:textColor="#FFFFFFFF"
+            android:textSize="11dp" />
+    </LinearLayout>
+</LinearLayout>

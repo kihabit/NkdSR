@@ -1,0 +1,307 @@
+VIDEO EXPORT PERFORMANCE AUDIT - ScreenRec (Android, Kotlin)
+=================================================================
+
+PROJECT CONTEXT
+----------------
+- App: Android screen recorder + video editor ("ScreenRec"), package com.nkd.screenrecorder.
+- Editing pipeline is implemented with FFmpegKit (com.moizhassan.ffmpeg:ffmpeg-kit-16kb:6.1.1,
+  declared in gradle/libs.versions.toml and app/build.gradle.kts). No Media3 Transformer, no raw
+  MediaCodec/MediaMuxer usage anywhere in the app (verified by grep - zero matches for
+  androidx.media3, Transformer, EditedMediaItem).
+- Default screen-recording frame rate is 30 fps (RecordScreenService.kt:73, frameRate = 30).
+- Problem: exporting a video after multiple edits (trim, crop, text, stickers, music/volume) is
+  too slow. Single-edit exports are comparatively fine.
+
+1. EXPORT ENTRY POINT
+
+----------------------
+File: app/src/main/java/com/nkd/screenrecorder/activities/EditVideoActivity.kt
+Class: EditVideoActivity
+Trigger: onMenuItemSelected() (line 5737), case R.id.cropSave with currentMode ==
+  EditorMode.NONE (line 5771) -> calls saveAllPendingEdits()
+Method: saveAllPendingEdits() defined at line 6455
+Confirmed by grep: this is the ONLY call site of saveAllPendingEdits() in the file - no
+duplicate-trigger path exists.
+
+2. COMPLETE EXPORT CALL CHAIN
+-------------------------------
+Toolbar "Save" tap
+ -> EditVideoActivity.onMenuItemSelected()           [line 5737]
+   -> saveAllPendingEdits()                          [line 6455]
+     -> showExportProgressScreen(passCount)          [line 6354]
+     -> burnTrimStep { ... }                         [line 5994]
+         -> FFmpegKit.executeAsync (trim)              [line 6023]
+       -> burnCropStep { ... }                       [line 6050]
+           -> VideoCropper.crop()                      [VideoCropper.kt:33]
+             -> FFmpegKit.executeAsync (crop)            [VideoCropper.kt:126]
+         -> burnTextStep { ... }                     [line 6099]
+             -> VideoTextBurner.burn() (plain text)      [VideoTextBurner.kt:77]
+             -> VideoTextBurner.burnAllStickers() (labeled text) [VideoTextBurner.kt:398]
+           -> burnStickerStep { ... }                [line 6196]
+               -> VideoTextBurner.burnAllStickers()     [VideoTextBurner.kt:398]
+             -> burnMusicStep { ... }                [line 6255]
+                 -> VideoTextBurner.burnMusic() or burnVideoVolume() [VideoTextBurner.kt:574 / 504]
+               -> exportFinalToOutput { ... }        [line 5534]
+                   -> copy cache file -> SAF output URI (plain file copy, no encode)
+                 -> ExportSuccessActivity / finish()
+
+Every FFmpegKit.execute*Async call in this chain is a SEPARATE, full, sequential
+decode -> filter -> encode pass over the entire video, each reading the previous step's
+full-length MP4 from disk and writing a brand-new full-length MP4 to disk.
+
+3. CURRENT EXPORT ARCHITECTURE
+--------------------------------
+Source video (content:// or cache file)
+ -> FFmpeg pass #1  (trim)         -c:v libopenh264, -vf fps=60               -> Trim_<ts>.mp4
+ -> FFmpeg pass #2  (crop)          -c:v libopenh264, -vf fps=60,crop,scale    -> cropped_<ts>.mp4
+ -> FFmpeg pass #3  (plain text)    -c:v libopenh264, -vf fps=60,drawtext*N    -> text_overlay_<ts>.mp4
+ -> FFmpeg pass #4  (labeled text)  -c:v libopenh264, filter_complex overlay*N -> sticker_overlay_<ts>.mp4
+ -> FFmpeg pass #5  (stickers)      -c:v libopenh264, filter_complex overlay*N -> sticker_overlay_<ts>.mp4
+ -> FFmpeg pass #6  (music/volume)  -c:v copy, amix / volume filter           -> music_overlay_<ts>.mp4
+ -> File copy (exportFinalToOutput) plain byte copy into SAF output file
+Final MP4
+
+Up to 5 full video re-encodes (passes 1-5; pass 6 is audio-only, -c:v copy) can run in one
+export if trim + crop + plain text + labeled text + stickers are all present. Each pass is
+gated only by "is this edit type present" - nothing merges filters across passes.
+
+4. MAIN PERFORMANCE BOTTLENECK
+--------------------------------
+Sequential, per-edit-type full video re-encoding, compounded by:
+1. A fixed -vf fps=60 baked into every video-touching pass, even though the recorder
+   defaults to 30 fps - doubling frame count processed by every pass.
+2. The encoder is ALWAYS software (libopenh264) - hardware is never used.
+3. Every pass re-probes MediaMetadataRetriever for bitrate from scratch and fully
+   re-decodes just to re-encode.
+4. Every pass writes a new full-resolution MP4 to app storage; none are deleted on a
+   SUCCESSFUL export (only on manual cancel - see section 9).
+
+5. MULTIPLE ENCODE PASSES
+---------------------------
+File / Method                                                    | Operation               | Pass | Recommendation
+EditVideoActivity.kt:5994 burnTrimStep                            | Trim (-ss/-t)           | #1   | Fold into single-pass trim via -ss -t on final command
+VideoCropper.kt:33 crop (via EditVideoActivity.kt:6050 burnCropStep) | Crop + scale          | #2   | Fold crop= into combined filter graph
+VideoTextBurner.kt:77 burn (via EditVideoActivity.kt:6099 burnTextStep) | Plain drawtext overlays | #3 | Fold drawtext chain into combined graph
+VideoTextBurner.kt:398 burnAllStickers (labeled-text branch of burnTextStep) | Labeled-text overlay | #4 | Merge with sticker pass - same primitive
+VideoTextBurner.kt:398 burnAllStickers (via EditVideoActivity.kt:6196 burnStickerStep) | Image sticker overlays | #5 | Fold overlay= chain into combined graph
+VideoTextBurner.kt:574 burnMusic (via EditVideoActivity.kt:6255 burnMusicStep) | Music mix | audio-only (-c:v copy) | Fine; optionally fold into the one combined command
+VideoTextBurner.kt:504 burnVideoVolume | Original-audio volume | audio-only (-c:v copy) | Fine as-is
+
+Target: one -filter_complex, one FFmpeg invocation, one video encode, one audio encode, one mux.
+
+6. FFMPEG AUDIT
+-----------------
+File:Method                                  | Purpose                              | Video codec  | Audio codec   | Scale     | FPS         | Bitrate                        | HW accel | Inputs | Encodes?
+EditVideoActivity.kt:6018 burnTrimStep        | -ss -t -vf fps=60                     | libopenh264  | aac 192k      | unchanged | forced 60   | sourceBitrate*1.1 clamp 4-40Mbps | none     | 1      | Yes
+VideoCropper.kt:114 crop                      | -vf fps=60,crop,scale                 | libopenh264  | copy          | cropped   | forced 60   | bitrate*1.1 clamp 4-40Mbps       | none     | 1      | Yes
+VideoTextBurner.kt:111 burn                   | -vf fps=60,drawtext*N                 | libopenh264  | copy          | unchanged | forced 60   | sourceBitrate*1.1                | none     | 1      | Yes
+VideoTextBurner.kt:352/446 burnSticker/burnAllStickers | filter_complex fps=60,overlay*N | libopenh264  | aac 128k/copy | unchanged | forced 60   | sourceBitrate*1.1                | none     | 1+N    | Yes
+VideoTextBurner.kt:525 burnVideoVolume        | -af volume=X                          | copy         | aac 192k      | n/a       | n/a         | n/a                              | none     | 1      | No
+VideoTextBurner.kt:677 burnMusic              | filter_complex atrim/adelay/amix       | copy         | aac 192k      | n/a       | n/a         | n/a                              | none     | 1+N    | No
+
+Notes:
+- libopenh264 (Cisco's software H.264 encoder) is used in every video pass - no hardware
+  route exists in an FFmpegKit-based pipeline the way it would with native MediaCodec or
+  Media3 Transformer.
+- fps=60 is hard-coded into every video filter regardless of source fps (default 30) -
+  silently doubles frame-processing cost on every pass.
+- No -preset/-g/-profile/-level tuning anywhere - encoder defaults used.
+- Bitrate/metadata re-probed via a fresh MediaMetadataRetriever in every single step
+  instead of computed once.
+- All filters (trim/crop/drawtext/overlay) are consolidatable into one -filter_complex.
+
+7. MEDIA3 / TRANSFORMER AUDIT
+-------------------------------
+Not applicable - confirmed via grep, zero usage of androidx.media3 / Transformer /
+EditedMediaItem anywhere in app/src/main/java. The entire pipeline is FFmpegKit. Preview
+playback uses plain VideoView/MediaPlayer, a separate lightweight path - the preview
+pipeline is NOT being reused as an extra export pass (no Step-11 issue).
+
+8. CODEC / HARDWARE ENCODING AUDIT
+------------------------------------
+Setting                  | Current                                              | Recommended                                                                    | File
+Video codec               | libopenh264 (software) in all 4 video-touching calls | Consolidate to one software pass now; consider native MediaCodec/Transformer migration later for real HW accel | VideoTextBurner.kt:116,356,455; VideoCropper.kt:116
+Hardware acceleration     | None requested anywhere                              | Not achievable under current FFmpegKit usage; requires MediaCodec/Transformer migration | n/a
+Frame rate                | Forced 60fps on every video filter                   | Drop forced fps; keep source fps (default 30) unless user explicitly requests a change | VideoTextBurner.kt:113,346,424; VideoCropper.kt:115
+Bitrate                   | sourceBitrate*1.1 clamp 4-40Mbps, recomputed per pass | Compute once per export, reuse                                               | VideoTextBurner.kt:46; VideoCropper.kt:113
+GOP/profile/level/preset  | Not set                                              | Not a primary bottleneck; tune later if needed                                | n/a
+Audio codec                | aac 128k/192k, sometimes copy                        | Keep copy where possible in the consolidated pass                            | VideoTextBurner.kt
+
+9. TEMP FILE / DISK I/O AUDIT
+-------------------------------
+Worst case (trim + crop + plain text + labeled text + stickers + music/volume all present)
+writes up to 6 full-size intermediate MP4s:
+- getExternalFilesDir(MOVIES)/trim/Trim_<ts>.mp4
+- getExternalFilesDir(MOVIES)/cropped/cropped_<ts>.mp4
+- getExternalFilesDir(MOVIES)/textOverlay/text_overlay_<ts>.mp4
+- getExternalFilesDir(MOVIES)/stickerOverlay/sticker_overlay_<ts>.mp4  x2 (labeled text + stickers)
+- getExternalFilesDir(MOVIES)/music/music_overlay_<ts>.mp4 or volume_<ts>.mp4
+- plus per-track music file copies (content:// -> cacheDir) and a full crop_input_<ts>.mp4
+  copy when source is content://.
+
+CONFIRMED LEAK: exportIntermediates (EditVideoActivity.kt:6352) is populated on every pass
+start (rememberExportIntermediate(), line 6398) but is only drained/deleted inside
+stopExport() (lines 6451-6452), which runs ONLY on manual cancel. The success path
+(saveAllPendingEdits() completion -> clearEditStateCache(), line 3096, which only removes a
+draft DB row) never deletes these files. EVERY SUCCESSFUL EXPORT PERMANENTLY LEAVES BEHIND
+EVERY INTERMEDIATE MP4 IT PRODUCED. This is a genuine storage leak, not just an efficiency
+note.
+
+All copying/writing is plain stream-based disk I/O - no pipes, no streaming between
+passes; everything round-trips through disk.
+
+10. THREADING / CONCURRENCY AUDIT
+------------------------------------
+- FFmpegKit.executeAsync/executeWithArgumentsAsync run off the main thread; all callbacks
+  are explicitly wrapped in runOnUiThread { ... } - no evidence of encode work blocking
+  the UI thread.
+- exportFinalToOutput()'s SAF file copy (EditVideoActivity.kt:5566-5568) and
+  VideoCropper's content:// -> temp-file copy (VideoCropper.kt:48-49) are synchronous
+  stream copies with NO coroutine/Dispatchers.IO offload. exportFinalToOutput is invoked
+  from inside a runOnUiThread block (line 6503), meaning THIS FILE COPY RUNS ON THE MAIN
+  THREAD - a real, confirmed (if secondary) main-thread I/O call that can cause jank on
+  large files.
+- No simultaneous/duplicate FFmpeg sessions - the chain is strictly sequential via nested
+  callbacks, gated by isExportActive.
+
+11. DUPLICATE EXPORT AUDIT
+-----------------------------
+- Only one listener reaches saveAllPendingEdits() (confirmed by grep).
+- saveAllPendingEdits() (line 6455) has NO reentrancy guard (no "if (isExportActive)
+  return" at the top). A rapid double-tap on Save before the full-screen export overlay
+  appears could theoretically start a second chain. Not confirmed exploitable in
+  practice, but confirmed absent in code.
+
+12. PERFORMANCE ANTI-PATTERNS (ranked)
+-----------------------------------------
+P0 - Critical
+- Up to 5 sequential full video decode+encode passes instead of 1 (saveAllPendingEdits /
+  burnTrimStep / burnCropStep / burnTextStep / burnStickerStep in EditVideoActivity.kt;
+  burn / burnAllStickers in VideoTextBurner.kt; crop in VideoCropper.kt).
+- fps=60 hard-coded into every video filter despite a 30fps-default source
+  (VideoTextBurner.kt:113,346,424; VideoCropper.kt:115).
+
+P1 - High
+- Software-only encoding (libopenh264) everywhere - no hardware path in the current
+  architecture.
+- Successful-export intermediate files never deleted (EditVideoActivity.kt:6352,6398 vs.
+  6451-6452 only firing in stopExport).
+- Bitrate/metadata re-probed from scratch on every pass (VideoTextBurner.kt:46;
+  VideoCropper.kt:210).
+
+P2 - Medium
+- Synchronous main-thread file copies in exportFinalToOutput and VideoCropper.crop's
+  content-URI staging.
+- No reentrancy guard in saveAllPendingEdits().
+
+P3 - Low
+- No GOP/profile/level/preset tuning (unverified impact).
+
+13. FILES THAT NEED MODIFICATION
+-----------------------------------
+Priority | File                     | Class            | Method                                                        | Problem                                                | Required Change                                                                                      | Impact
+P0        | EditVideoActivity.kt    | EditVideoActivity | saveAllPendingEdits, burnTrimStep, burnCropStep, burnTextStep, burnStickerStep | Chains up to 5 full re-encode passes via nested callbacks | Replace the callback chain with one function that builds a single combined -filter_complex (trim + crop + drawtext*N + overlay*N) and issues one FFmpeg call | Very High
+P0        | VideoTextBurner.kt      | VideoTextBurner   | burn, burnAllStickers                                        | Each runs its own full-video FFmpeg command; hard-codes fps=60 | Expose filter-graph fragments (drawtext/overlay strings) instead of running independent encodes; drop forced fps | Very High
+P0        | VideoCropper.kt         | VideoCropper      | crop                                                          | Independent full-video FFmpeg command; hard-codes fps=60 | Expose a crop= filter fragment for the combined graph; drop forced fps                               | Very High
+P1        | EditVideoActivity.kt    | EditVideoActivity | success path after exportFinalToOutput                       | Intermediate files never deleted on success            | Delete everything in exportIntermediates (minus final output) after success, mirroring stopExport()'s cleanup | High
+P1        | VideoTextBurner.kt      | VideoTextBurner   | sourceBitrateBps                                              | Re-reads bitrate via MediaMetadataRetriever every call | Compute once in EditVideoActivity, pass down                                                        | Medium
+P1        | VideoCropper.kt         | VideoCropper      | getVideoInfo                                                  | Re-reads metadata every crop call                       | Accept pre-computed values from caller                                                               | Medium
+P2        | EditVideoActivity.kt    | EditVideoActivity | exportFinalToOutput                                           | Synchronous file copy on main thread                    | Move to Dispatchers.IO/background executor                                                           | Medium
+P2        | EditVideoActivity.kt    | EditVideoActivity | saveAllPendingEdits                                           | No reentrancy guard                                     | Add "if (isExportActive) return" at top                                                              | Low
+
+14. METHODS THAT NEED MODIFICATION
+--------------------------------------
+EditVideoActivity.saveAllPendingEdits()        lines 6455-6527
+EditVideoActivity.burnTrimStep()               lines 5994-6048
+EditVideoActivity.burnCropStep()               lines 6050-6097
+EditVideoActivity.burnTextStep()               lines 6099-6194
+EditVideoActivity.burnStickerStep()            lines 6196-6253
+EditVideoActivity.burnMusicStep()              lines 6255-6330
+EditVideoActivity.exportFinalToOutput()        lines 5534-5576
+EditVideoActivity.stopExport()                 lines 6418-6453   (cleanup logic to mirror on success)
+VideoTextBurner.burn()                         VideoTextBurner.kt:77-153
+VideoTextBurner.burnAllStickers()              VideoTextBurner.kt:398-501
+VideoTextBurner.burnMusic()                    VideoTextBurner.kt:574-727
+VideoTextBurner.burnVideoVolume()              VideoTextBurner.kt:504-556
+VideoTextBurner.sourceBitrateBps()             VideoTextBurner.kt:46-60
+VideoCropper.crop()                            VideoCropper.kt:33-160
+VideoCropper.getVideoInfo()                    VideoCropper.kt:210-235
+
+15. RECOMMENDED OPTIMIZATION
+-------------------------------
+1. Collapse the 5-stage video chain into one FFmpeg invocation. Build a single
+   -filter_complex in EditVideoActivity: trim via -ss/-t (or in-graph trim= if
+   frame-accurate sync with overlays is needed), crop via crop=, each text overlay via
+   drawtext=, each sticker/label via scale=+overlay= - all chained, with one
+   "-c:v libopenh264 -b:v <bitrate>", one "-c:a aac", one output. This is where almost
+   all the time savings come from.
+2. Drop the hard-coded fps=60. Only add fps= if the user explicitly requests a
+   frame-rate change.
+3. Compute bitrate/metadata once at export start, thread it through the single combined
+   command.
+4. Fix the intermediate-file leak - delete exportIntermediates (minus final output)
+   after successful exportFinalToOutput(), mirroring stopExport().
+5. Move the final SAF file copy off the main thread.
+
+Second-tier, higher-risk option: migrate video-affecting operations off FFmpegKit onto
+native MediaCodec/MediaMuxer or Media3 Transformer for real hardware-accelerated
+encoding - pursue only after single-pass consolidation is in place and measured.
+
+16. EXPECTED PERFORMANCE IMPROVEMENT
+---------------------------------------
+Architecture-derived estimates (not yet measured):
+- 1 edit type active (e.g. crop only): ~10-20% (mostly from removing forced fps doubling).
+- 2-3 edit types active (trim + crop + text - common case): roughly 2-3x faster.
+- 4-5 edit types active (trim + crop + text + labeled text + stickers): roughly 4-5x faster.
+Removing forced fps=60 alone should cut per-pass work by close to half for 30fps-sourced
+recordings, compounding with the pass-count reduction. Validate with before/after timing
+instrumentation (log points: EXPORT_START, per-pass start/end, ENCODE_END, MUX_END,
+EXPORT_COMPLETE).
+
+17. RISK / REGRESSION ANALYSIS
+---------------------------------
+- Video quality: should be unaffected or improved (fewer re-encode generations = less
+  cumulative lossy-compression loss).
+- Audio sync: highest risk - today trim runs as its own isolated pass before overlay
+  timing is baked in, so overlay start/end times are already expressed in
+  trimmed-timeline terms. When trim becomes -ss/-t on the same combined command, verify
+  whether drawtext/overlay enable='between(t,...)' expressions still line up (FFmpeg's
+  -ss placement before/after -i changes whether downstream filter t is pre- or
+  post-trim) - needs explicit testing.
+- Crop: crop coordinates are computed against the pre-crop frame; in a combined graph,
+  overlay x/y must be recomputed relative to the cropped frame, and crop must precede
+  overlay/drawtext in filter order.
+- Rotation: no rotation-burning code found in this flow - out of scope, but if added
+  later it must also join the combined graph rather than becoming a 6th pass.
+- Filters/overlays/watermark: existing per-type models already produce filter-fragment
+  strings; consolidation is mostly concatenating fragments correctly, not a data-model
+  redesign.
+- Subtitles: not present in this codebase's edit model.
+- Output compatibility: unchanged (same codec/container) unless the hardware-encoder
+  migration is later pursued.
+- Android versions: no version-specific risk from filter-graph consolidation; existing
+  SAF/content:// handling (resolveFfmpegInputPath) is untouched.
+
+18. IMPLEMENTATION ORDER
+---------------------------
+1. EditVideoActivity.kt - redesign saveAllPendingEdits() to build one combined
+   filter-graph spec instead of chaining burnTrimStep/burnCropStep/burnTextStep/
+   burnStickerStep.
+2. VideoTextBurner.kt - refactor burn()/burnAllStickers() into pure filter-fragment
+   builders; drop forced fps=60.
+3. VideoCropper.kt - same refactor for crop=; drop forced fps=60.
+4. EditVideoActivity.kt - fix success-path intermediate cleanup; move
+   exportFinalToOutput's file copy to Dispatchers.IO.
+5. Testing: export each edit type in isolation (trim-only, crop-only, text-only,
+   labeled-text-only, stickers-only, music-only, volume-only), then combinations
+   (trim+crop+text, all types together), checking overlay position/timing accuracy and
+   audio sync vs. pre-change behavior; verify stopExport() cancel path still cleans up
+   correctly.
+6. Final validation: add timing logs around the new single-pass call, compare
+   wall-clock export time before/after on a representative multi-edit video to confirm
+   the expected 2-5x improvement.
+
+---
+This was an AUDIT ONLY - no files were modified. All findings above are based on direct
+inspection of the source files cited (line numbers verified against the current working
+tree).

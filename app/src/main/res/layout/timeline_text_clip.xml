@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/clipRoot"
+    android:layout_width="wrap_content"
+    android:layout_height="28dp">
+
+    <LinearLayout
+        android:id="@+id/clipContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <ImageView
+            android:id="@+id/sticker"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="6dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/clipLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:textColor="#FFFFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- ✅ Trim handles — only shown on the currently selected clip (toggled in code).
+         8dp-wide touch target with a small centered white pill (not a full-bleed image),
+         so the clip's own color/label stay visible instead of a solid white block. -->
+    <View
+        android:id="@+id/leftHandle"
+        android:layout_width="8dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@drawable/bg_clip_trim_handle"
+        android:visibility="gone" />
+
+    <View
+        android:id="@+id/rightHandle"
+        android:layout_width="8dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="@drawable/bg_clip_trim_handle"
+        android:visibility="gone" />
+
+</FrameLayout>

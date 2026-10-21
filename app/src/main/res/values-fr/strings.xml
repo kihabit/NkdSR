@@ -1,0 +1,761 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NKD-SR</string>
+    <string name="action_settings">Paramètres</string>
+    <string name="first_fragment_label">Vidéos</string>
+    <string name="second_fragment_label">Images</string>
+    <string name="next">Suivant</string>
+    <string name="previous">Précédent</string>
+    <string name="edit">Modifier</string>
+    <string name="music">Musique</string>
+    <string name="cancel">Annuler</string>
+    <string name="no_text_overlays_added">Aucune superposition de texte ajoutée</string>
+    <string name="no_valid_text_to_burn">Aucun texte valide à graver</string>
+    <string name="no_music_added">Aucune musique ajoutée</string>
+    <string name="crop_area_not_ready">Zone de recadrage non prête</string>
+    <string name="crop_failed">Échec du recadrage: %s</string>
+    <string name="crop_saved">Enregistré:\n%s</string>
+    <string name="text_saved">Enregistré:\n%s</string>
+    <string name="text_failed">Échec: %s</string>
+    <string name="music_saved">Enregistré:\n%s</string>
+    <string name="music_failed">Échec: %s</string>
+
+    <string name="adding_text_overlay">Ajout de la superposition de texte</string>
+    <string name="adding_music_progress">Ajout de la musique… %d%%</string>
+    <string name="cropping_video_title">Recadrage de la vidéo</string>
+    <string name="cropping_progress">Recadrage… %d%%</string>
+    <string name="crop">Rogner</string>
+    <string name="add_sticker">Ajouter un autocollant</string>
+    <string name="tool_shape">Forme</string>
+    <string name="tool_text">Texte</string>
+    <string name="tool_eraser">Gomme</string>
+    <string name="tool_filter">Filtre</string>
+    <string name="tool_emoji">Émoji</string>
+    <string name="tool_sticker">Autocollant</string>
+
+    <string name="msg_saving">Enregistrement…</string>
+    <string name="msg_image_saved">Image enregistrée avec succès</string>
+    <string name="msg_image_save_failed">Échec de l\'enregistrement</string>
+
+    <string name="btn_save">Enregistrer</string>
+    <string name="btn_cancel">Annuler</string>
+    <string name="title_gif">GIF</string>
+    <string name="label_size">Taille</string>
+
+    <string name="msg_no_gif_found">Aucun GIF trouvé !</string>
+    <string name="msg_gif_deleted">GIF supprimé avec succès</string>
+    <string name="msg_gif_delete_failed">Échec de la suppression du GIF</string>
+    <string name="dialog_storage_title">Détails du stockage</string>
+    <string name="dialog_storage_message">Stockage total : %1$s Go\nUtilisé : %2$s Go (%3$d%%)\nDisponible : %4$s Go</string>
+    <string name="btn_ok">OK</string>
+    <string name="label_brush_size">Pinceau</string>
+    <string name="label_opacity">Opacité</string>
+    <string name="btn_done">Terminé</string>
+    <string name="label_total_time">Durée totale : %s</string>
+    <string name="menu_merge">Fusionner</string>
+    <string name="msg_video_merged">Vidéo fusionnée avec succès</string>
+    <string name="btn_discard">Ignorer</string>
+    <string name="msg_images_deleted">Images supprimées avec succès</string>
+    <string name="msg_images_delete_failed">Échec de la suppression</string>
+    <string name="msg_no_images_selected">Aucune image sélectionnée</string>
+    <string name="share_images">Partager les images</string>
+    <string name="dialog_delete_title">Supprimer les images</string>
+    <string name="dialog_delete_message">Voulez-vous vraiment supprimer %d image(s) ?</string>
+    <string name="btn_delete">Supprimer</string>
+    <string name="selected_count">%d sélectionné(s)</string>
+    <string name="permission_required_title">Permission requise</string>
+    <string name="permission_audio_message">Nous avons besoin d\'accéder à vos fichiers audio pour ajouter de la musique à votre vidéo.</string>
+    <string name="allow">Autoriser</string>
+    <string name="enter_text">Saisir le texte</string>
+    <string name="font_default">Défaut</string>
+    <string name="selected_music">Musique sélectionnée</string>
+    <string name="select_quality">Sélectionner la qualité</string>
+    <string name="select_frame_rate">Sélectionner la fréquence d\'images</string>
+    <string name="select_audio_source">Sélectionner la source audio</string>
+    <string name="select_audio_quality">Sélectionner la qualité audio</string>
+    <string name="countdown_time">Compte à rebours: %d sec</string>
+    <string name="enter_countdown">Entrez le compte à rebours en secondes</string>
+    <string name="save">Enregistrer</string>
+    <string name="trimming_video">Découpage de la vidéo...</string>
+    <string name="resolution_output">Résolution de sortie</string>
+    <string name="output_quality">Qualité de sortie</string>
+    <string name="compressing_video">Compression de la vidéo</string>
+    <string name="estimated_size">Taille estimée: %.2f MB</string>
+    <string name="saved_successfully">Enregistré avec succès ✅</string>
+    <string name="failed">Échec ❌</string>
+    <string name="compress">Compresser</string>
+    <string name="no_stickers_added">Aucun autocollant ajouté</string>
+    <string name="no_video_loaded">Aucune vidéo chargée</string>
+    <string name="no_valid_stickers">Aucun autocollant valide à graver</string>
+    <string name="adding_sticker">Ajout d\'autocollant</string>
+    <string name="starting">Démarrage…</string>
+    <string name="rendering">Rendu… %d%%</string>
+    <string name="saved">Enregistré:\n%s</string>
+    <string name="burn_failed">Échec: %s</string>
+    <string name="common">Commun</string>
+    <string name="gif_created">GIF créé avec succès!</string>
+    <string name="gif_failed">Échec de la création du GIF!</string>
+    <string name="trim_successful">Découpage réussi!</string>
+    <string name="trim_failed">Échec du découpage! Veuillez réessayer.</string>
+    <string name="almost_done">Presque terminé...</string>
+    <string name="converting_to_gif">Conversion en GIF...</string>
+    <string name="failed_to_create_file">Échec de la création du fichier</string>
+    <string name="video_quality">Qualité vidéo</string>
+    <string name="audio_quality">Qualité audio</string>
+    <string name="audio_source">Source audio</string>
+    <string name="photo">Photo</string>
+    <string name="rename">Renommer</string>
+    <string name="delete">Supprimer</string>
+    <string name="trim">Couper</string>
+    <string name="shape">Forme</string>
+    <string name="circle">Cercle</string>
+    <string name="rectangle">Rectangle</string>
+    <string name="close_selection">Fermer</string>
+    <string name="select_all">Tout sélectionner</string>
+    <string name="share">Partager</string>
+    <string name="screenshot_image">Capture d\'écran</string>
+    <string name="close">Fermer</string>
+    <string name="preview_image">Aperçu de l\'image</string>
+    <string name="screenshot_preview">Aperçu de la capture</string>
+    <string name="tool_box">Boîte à outils</string>
+    <string name="back">Retour</string>
+    <string name="finish">Terminer</string>
+    <string name="video_shoot_tip">Faites glisser pour sélectionner le segment dans %d seconde que vous souhaitez publier!</string>
+    <string name="label_brush">Pinceau</string>
+    <string name="label_shape">Forme</string>
+    <string name="label_oval">Ovale</string>
+    <string name="label_rectangle">Rectangle</string>
+    <string name="label_line">Ligne</string>
+    <string name="label_arrow">Flèche</string>
+    <string name="label_emoji">Emoji</string>
+    <string name="label_sticker">Autocollant</string>
+    <string name="label_eraser">Gomme</string>
+    <string name="label_eraser_mode">Mode gomme</string>
+    <string name="label_text">Texte</string>
+    <string name="label_filter">Filtre</string>
+    <string name="label_adjust">Ajuster</string>
+    <string name="msg_save_image">Voulez-vous quitter sans enregistrer l\'image?</string>
+    <string name="msg_save_image_to_share">Veuillez enregistrer l\'image avant de partager</string>
+    <string name="msg_share_image">Partager l\'image</string>
+    <string name="floating_ball">Balle flottante</string>
+    <string name="facecam">Facecam</string>
+    <string name="screenshot">Capture d\'écran</string>
+    <string name="drawing">Dessin</string>
+    <string name="today">Aujourd\'hui</string>
+    <string name="settings">Paramètres</string>
+    <string name="video">Vidéo</string>
+    <string name="video_quality_label">Qualité vidéo</string>
+    <string name="frame_rate">Fréquence d\'images</string>
+    <string name="audio">Audio</string>
+    <string name="audio_source_label">Source audio</string>
+    <string name="audio_quality_label">Qualité audio</string>
+    <string name="device_audio">Audio du appareil</string>
+    <string name="video_settings">Paramètres vidéo</string>
+    <string name="orientation">Orientation</string>
+    <string name="adaptive">Adaptatif</string>
+    <string name="save_location">Emplacement de sauvegarde</string>
+    <string name="control">Contrôle</string>
+    <string name="countdown_before_start">Compte à rebours avant le début</string>
+    <string name="keep_recording_screen_off">Continuer l\'enregistrement écran éteint</string>
+    <string name="hide_floating_ball_recording">Masquer la balle flottante pendant l\'enregistrement</string>
+    <string name="gesture_control">Contrôle gestuel</string>
+    <string name="more">Plus</string>
+    <string name="language">Langue</string>
+    <string name="rate_us">Notez-nous ⭐</string>
+    <string name="default_quality">Défaut</string>
+    <string name="select_video">Sélectionner une vidéo</string>
+    <string name="video_trimming">Couper la vidéo</string>
+    <string name="select_image">Sélectionner une image</string>
+    <string name="image_preview">Aperçu de l\'image</string>
+    <string name="edit_video">Modifier la vidéo</string>
+    <string name="trim_video">Couper la vidéo</string>
+    <string name="share_label">Partager</string>
+    <string name="edit_image">Modifier l\'image</string>
+    <string name="more_app">Plus d\'apps</string>
+    <string name="video_compress">Compresser la vidéo</string>
+    <string name="video_to_gif">Vidéo en GIF</string>
+    <string name="merge_video_photo">Fusionner vidéo/photo</string>
+    <string name="add_sticker_on_video">Ajouter un autocollant sur la vidéo</string>
+    <string name="crop_video">Recadrer</string>
+    <string name="menu_video">Vidéo</string>
+    <string name="menu_image">Image</string>
+    <string name="menu_gif">GIF</string>
+    <string name="menu_edit">Modifier</string>
+    <string name="text_label">Texte</string>
+    <string name="sticker_label">Autocollant</string>
+    <string name="no_images_found">Aucune image trouvée</string>
+    <string name="no_data_found">Aucune donnée trouvée</string>
+
+    <string-array name="audio_source">
+        <item>@string/audio_source_mute</item>
+        <item>@string/audio_source_microphone</item>
+    </string-array>
+
+
+    <string-array name="video_resolution">
+        <item>@string/quality_low</item>
+        <item>@string/quality_medium</item>
+        <item>@string/quality_high</item>
+        <item>@string/quality_original</item>
+    </string-array>
+
+    <string-array name="video_frame_rate">
+        <item>60 FPS</item>
+        <item>50 FPS</item>
+        <item>48 FPS</item>
+        <item>25 FPS</item>
+        <item>24 FPS</item>
+        <item>@string/fps_30_recommended</item>
+    </string-array>
+
+    <string-array name="photo_editor_emoji">
+        <item>u+1f604</item>
+        <item>u+1f603</item>
+        <item>u+1f600</item>
+        <item>u+1f60a</item>
+        <item>u+263a</item>
+        <item>u+1f609</item>
+        <item>u+1f60d</item>
+        <item>u+1f618</item>
+        <item>u+1f61a</item>
+        <item>u+1f617</item>
+        <item>u+1f619</item>
+        <item>u+1f61c</item>
+        <item>u+1f61d</item>
+        <item>u+1f61b</item>
+        <item>u+1f633</item>
+        <item>u+1f601</item>
+        <item>u+1f614</item>
+        <item>u+1f60c</item>
+        <item>u+1f612</item>
+        <item>u+1f61e</item>
+        <item>u+1f623</item>
+        <item>u+1f622</item>
+        <item>u+1f602</item>
+        <item>u+1f62d</item>
+        <item>u+1f62a</item>
+        <item>u+1f625</item>
+        <item>u+1f630</item>
+        <item>u+1f605</item>
+        <item>u+1f613</item>
+        <item>u+1f629</item>
+        <item>u+1f62b</item>
+        <item>u+1f628</item>
+        <item>u+1f631</item>
+        <item>u+1f620</item>
+        <item>u+1f621</item>
+        <item>u+1f624</item>
+        <item>u+1f616</item>
+        <item>u+1f606</item>
+        <item>u+1f60b</item>
+        <item>u+1f637</item>
+        <item>u+1f60e</item>
+        <item>u+1f634</item>
+        <item>u+1f635</item>
+        <item>u+1f632</item>
+        <item>u+1f61f</item>
+        <item>u+1f626</item>
+        <item>u+1f627</item>
+        <item>u+1f608</item>
+        <item>u+1f47f</item>
+        <item>u+1f62e</item>
+        <item>u+1f62c</item>
+        <item>u+1f610</item>
+        <item>u+1f615</item>
+        <item>u+1f62f</item>
+        <item>u+1f636</item>
+        <item>u+1f607</item>
+        <item>u+1f60f</item>
+        <item>u+1f611</item>
+        <item>u+1f472</item>
+        <item>u+1f473</item>
+        <item>u+1f46e</item>
+        <item>u+1f477</item>
+        <item>u+1f482</item>
+        <item>u+1f476</item>
+        <item>u+1f466</item>
+        <item>u+1f467</item>
+        <item>u+1f468</item>
+        <item>u+1f469</item>
+        <item>u+1f474</item>
+        <item>u+1f475</item>
+        <item>u+1f471</item>
+        <item>u+1f47c</item>
+        <item>u+1f478</item>
+        <item>u+1f63a</item>
+        <item>u+1f638</item>
+        <item>u+1f63b</item>
+        <item>u+1f63d</item>
+        <item>u+1f63c</item>
+        <item>u+1f640</item>
+        <item>u+1f63f</item>
+        <item>u+1f639</item>
+        <item>u+1f63e</item>
+        <item>u+1f479</item>
+        <item>u+1f47a</item>
+        <item>u+1f648</item>
+        <item>u+1f649</item>
+        <item>u+1f64a</item>
+        <item>u+1f480</item>
+        <item>u+1f47d</item>
+        <item>u+1f4a9</item>
+        <item>u+1f525</item>
+        <item>u+2728</item>
+        <item>u+1f31f</item>
+        <item>u+1f4ab</item>
+        <item>u+1f4a5</item>
+        <item>u+1f4a2</item>
+        <item>u+1f4a6</item>
+        <item>u+1f4a7</item>
+        <item>u+1f4a4</item>
+        <item>u+1f4a8</item>
+        <item>u+1f442</item>
+        <item>u+1f440</item>
+        <item>u+1f443</item>
+        <item>u+1f444</item>
+        <item>u+1f445</item>
+        <item>u+1f446</item>
+        <item>u+1f447</item>
+        <item>u+1f448</item>
+        <item>u+1f449</item>
+        <item>u+1f44a</item>
+        <item>u+1f44b</item>
+        <item>u+1f44c</item>
+        <item>u+1f44d</item>
+        <item>u+1f44e</item>
+        <item>u+1f44f</item>
+        <item>u+1f450</item>
+        <item>u+1f46a</item>
+        <item>u+1f46b</item>
+        <item>u+1f46c</item>
+        <item>u+1f46d</item>
+        <item>u+1f48f</item>
+        <item>u+1f491</item>
+        <item>u+1f46f</item>
+        <item>u+1f470</item>
+        <item>u+1f47b</item>
+        <item>u+1f47e</item>
+        <item>u+1f481</item>
+        <item>u+1f483</item>
+        <item>u+1f485</item>
+        <item>u+1f486</item>
+        <item>u+1f487</item>
+        <item>u+1f489</item>
+        <item>u+1f48a</item>
+        <item>u+1f451</item>
+        <item>u+1f452</item>
+        <item>u+1f453</item>
+        <item>u+1f454</item>
+        <item>u+1f45a</item>
+        <item>u+1f457</item>
+        <item>u+1f3bd</item>
+        <item>u+1f456</item>
+        <item>u+1f458</item>
+        <item>u+1f459</item>
+        <item>u+1f4bc</item>
+        <item>u+1f45c</item>
+        <item>u+1f45d</item>
+        <item>u+1f45b</item>
+        <item>u+1f380</item>
+        <item>u+1f302</item>
+        <item>u+1f484</item>
+        <item>u+1f49b</item>
+        <item>u+1f499</item>
+        <item>u+1f49c</item>
+        <item>u+1f49a</item>
+        <item>u+2764</item>
+        <item>u+1f494</item>
+        <item>u+1f497</item>
+        <item>u+1f493</item>
+        <item>u+1f495</item>
+        <item>u+1f496</item>
+        <item>u+1f49e</item>
+        <item>u+1f498</item>
+        <item>u+1f48c</item>
+        <item>u+1f48b</item>
+        <item>u+1f48d</item>
+        <item>u+1f48e</item>
+        <item>u+1f464</item>
+        <item>u+1f465</item>
+        <item>u+1f4ac</item>
+        <item>u+1f463</item>
+        <item>u+1f4ad</item>
+        <item>u+1f436</item>
+        <item>u+1f43a</item>
+        <item>u+1f431</item>
+        <item>u+1f42d</item>
+        <item>u+1f439</item>
+        <item>u+1f430</item>
+        <item>u+1f438</item>
+        <item>u+1f42f</item>
+        <item>u+1f428</item>
+        <item>u+1f43b</item>
+        <item>u+1f437</item>
+        <item>u+1f43d</item>
+        <item>u+1f42e</item>
+        <item>u+1f417</item>
+        <item>u+1f435</item>
+        <item>u+1f412</item>
+        <item>u+1f434</item>
+        <item>u+1f411</item>
+        <item>u+1f418</item>
+        <item>u+1f43c</item>
+        <item>u+1f427</item>
+        <item>u+1f426</item>
+        <item>u+1f424</item>
+        <item>u+1f425</item>
+        <item>u+1f423</item>
+        <item>u+1f414</item>
+        <item>u+1f40d</item>
+        <item>u+1f422</item>
+        <item>u+1f41b</item>
+        <item>u+1f41d</item>
+        <item>u+1f41c</item>
+        <item>u+1f41e</item>
+        <item>u+1f40c</item>
+        <item>u+1f419</item>
+        <item>u+1f41a</item>
+        <item>u+1f420</item>
+        <item>u+1f41f</item>
+        <item>u+1f42c</item>
+        <item>u+1f433</item>
+        <item>u+1f40b</item>
+        <item>u+1f404</item>
+        <item>u+1f40f</item>
+        <item>u+1f400</item>
+        <item>u+1f403</item>
+        <item>u+1f405</item>
+        <item>u+1f407</item>
+        <item>u+1f409</item>
+        <item>u+1f40e</item>
+        <item>u+1f410</item>
+        <item>u+1f413</item>
+        <item>u+1f415</item>
+        <item>u+1f416</item>
+        <item>u+1f401</item>
+        <item>u+1f402</item>
+        <item>u+1f432</item>
+        <item>u+1f421</item>
+        <item>u+1f40a</item>
+        <item>u+1f42b</item>
+        <item>u+1f42a</item>
+        <item>u+1f406</item>
+        <item>u+1f408</item>
+        <item>u+1f429</item>
+        <item>u+1f43e</item>
+        <item>u+1f490</item>
+        <item>u+1f338</item>
+        <item>u+1f337</item>
+        <item>u+1f340</item>
+        <item>u+1f339</item>
+        <item>u+1f33b</item>
+        <item>u+1f33a</item>
+        <item>u+1f341</item>
+        <item>u+1f343</item>
+        <item>u+1f342</item>
+        <item>u+1f33f</item>
+        <item>u+1f33e</item>
+        <item>u+1f344</item>
+        <item>u+1f335</item>
+        <item>u+1f334</item>
+        <item>u+1f332</item>
+        <item>u+1f333</item>
+        <item>u+1f330</item>
+        <item>u+1f331</item>
+        <item>u+1f33c</item>
+        <item>u+1f310</item>
+        <item>u+1f31e</item>
+        <item>u+1f31d</item>
+        <item>u+1f31a</item>
+        <item>u+1f311</item>
+        <item>u+1f312</item>
+        <item>u+1f313</item>
+        <item>u+1f314</item>
+        <item>u+1f315</item>
+        <item>u+1f316</item>
+        <item>u+1f317</item>
+        <item>u+1f318</item>
+        <item>u+1f31c</item>
+        <item>u+1f31b</item>
+        <item>u+1f319</item>
+        <item>u+1f30d</item>
+        <item>u+1f30e</item>
+        <item>u+1f30f</item>
+        <item>u+1f30b</item>
+        <item>u+1f30c</item>
+        <item>u+1f320</item>
+        <item>u+2b50</item>
+        <item>u+2600</item>
+        <item>u+26c5</item>
+        <item>u+2601</item>
+        <item>u+26a1</item>
+        <item>u+2614</item>
+        <item>u+2744</item>
+        <item>u+26c4</item>
+        <item>u+1f300</item>
+        <item>u+1f301</item>
+        <item>u+1f308</item>
+        <item>u+1f30a</item>
+        <item>u+1f3e0</item>
+        <item>u+1f3e1</item>
+        <item>u+1f3eb</item>
+        <item>u+1f3e2</item>
+        <item>u+1f3e3</item>
+        <item>u+1f3e5</item>
+        <item>u+1f3e6</item>
+        <item>u+1f3ea</item>
+        <item>u+1f3e9</item>
+        <item>u+1f3e8</item>
+        <item>u+1f492</item>
+        <item>u+26ea</item>
+        <item>u+1f3ec</item>
+        <item>u+1f3e4</item>
+        <item>u+1f307</item>
+        <item>u+1f306</item>
+        <item>u+1f3ef</item>
+        <item>u+1f3f0</item>
+        <item>u+26fa</item>
+        <item>u+1f3ed</item>
+        <item>u+1f5fc</item>
+        <item>u+1f5fe</item>
+        <item>u+1f5fb</item>
+        <item>u+1f304</item>
+        <item>u+1f305</item>
+        <item>u+1f303</item>
+        <item>u+1f5fd</item>
+        <item>u+1f309</item>
+        <item>u+1f3a0</item>
+        <item>u+1f3a1</item>
+        <item>u+26f2</item>
+        <item>u+1f3a2</item>
+        <item>u+1f6a2</item>
+        <item>u+26f5</item>
+        <item>u+1f6a4</item>
+        <item>u+1f6a3</item>
+        <item>u+2693</item>
+        <item>u+1f680</item>
+        <item>u+2708</item>
+        <item>u+1f4ba</item>
+        <item>u+1f681</item>
+        <item>u+1f682</item>
+        <item>u+1f68a</item>
+        <item>u+1f689</item>
+        <item>u+1f69e</item>
+        <item>u+1f686</item>
+        <item>u+1f684</item>
+        <item>u+1f685</item>
+        <item>u+1f688</item>
+        <item>u+1f687</item>
+        <item>u+1f69d</item>
+        <item>u+1f68b</item>
+        <item>u+1f683</item>
+        <item>u+1f68e</item>
+        <item>u+1f68c</item>
+        <item>u+1f68d</item>
+        <item>u+1f699</item>
+        <item>u+1f698</item>
+        <item>u+1f697</item>
+        <item>u+1f695</item>
+        <item>u+1f696</item>
+        <item>u+1f69b</item>
+        <item>u+1f69a</item>
+        <item>u+1f6a8</item>
+        <item>u+1f693</item>
+        <item>u+1f694</item>
+        <item>u+1f692</item>
+        <item>u+1f691</item>
+        <item>u+1f690</item>
+        <item>u+1f6b2</item>
+        <item>u+1f6a1</item>
+        <item>u+1f69f</item>
+        <item>u+1f6a0</item>
+        <item>u+1f69c</item>
+        <item>u+1f488</item>
+        <item>u+1f68f</item>
+        <item>u+1f3ab</item>
+        <item>u+1f6a6</item>
+        <item>u+1f6a5</item>
+        <item>u+26a0</item>
+        <item>u+1f6a7</item>
+        <item>u+1f530</item>
+        <item>u+26fd</item>
+        <item>u+1f3ee</item>
+        <item>u+1f3b0</item>
+        <item>u+2668</item>
+        <item>u+1f5ff</item>
+        <item>u+1f3aa</item>
+        <item>u+1f3ad</item>
+        <item>u+1f4cd</item>
+        <item>u+1f6a9</item>
+    </string-array>
+    <string name="audio_record">Enregistrer</string>
+    <string name="audio_use">Utiliser</string>
+    <string name="record_timer_off">Désactivé</string>
+    <string name="record_timer_3s">3s</string>
+    <string name="my_music">Ma musique</string>
+    <string name="extract_audio_from_video">Extraire l\'audio d\'une vidéo</string>
+    <string name="open_from">OUVRIR DEPUIS  ›</string>
+    <string name="search_music_hint">Rechercher des titres ou artistes</string>
+    <string name="no_audio_in_video">Cette vidéo n\'a pas de piste audio</string>
+    <string name="extracting_audio">Extraction de l\'audio…</string>
+    <string name="extract_audio_failed">Impossible d\'extraire l\'audio</string>
+    <string name="no_songs_found">Aucun titre trouvé</string>
+    <string name="export_converting_progress">Conversion de la vidéo... %d%%</string>
+    <string name="export_stop_title">Arrêter l’exportation ?</string>
+    <string name="yes">Oui</string>
+    <string name="no">Non</string>
+    <string name="notif_record">Enregistrer</string>
+    <string name="notif_screenshot">Capture</string>
+    <string name="notif_tools">Outils</string>
+    <string name="notif_home">Accueil</string>
+    <string name="notif_exit">Quitter</string>
+    <string name="notif_pause">Pause</string>
+    <string name="notif_resume">Reprendre</string>
+    <string name="notif_stop">Arrêter</string>
+    <string name="notif_toolbar_title">Barre d’outils de notification</string>
+    <string name="notif_recording">Enregistrement</string>
+    <string name="notif_paused">En pause</string>
+    <string name="screenshot_unavailable_recording">Capture d’écran indisponible pendant l’enregistrement</string>
+    <string name="notif_screenshot_short">Capture</string>
+    <string name="gif_unavailable_recording">GIF indisponible pendant l’enregistrement</string>
+
+    <string name="overlay_permission_title">Autorisation de superposition requise</string>
+    <string name="overlay_permission_message">Pour afficher le compte à rebours avant l\'enregistrement et le bouton de capture d\'écran, nous avons besoin de l\'autorisation de superposition.</string>
+    <string name="grant">Autoriser</string>
+    <string name="deny">Refuser</string>
+    <string name="select_directory_title">Choisir le dossier d\'enregistrement</string>
+    <string name="select_directory_message">Veuillez choisir le dossier où vos enregistrements d\'écran seront sauvegardés.</string>
+    <string name="select_directory_button">Choisir le dossier</string>
+    <string name="add_video">Ajouter une vidéo</string>
+    <string name="adding_sticker_progress">Ajout de l\'autocollant %1$d sur %2$d</string>
+    <string name="channel_camera_name">Caméra frontale</string>
+    <string name="channel_recording_desc">Affiche l\'état de l\'enregistrement de l\'écran</string>
+    <string name="channel_recording_name">Enregistrement de l\'écran</string>
+    <string name="channel_views_desc">Affiche le bouton flottant de capture et la boîte à outils</string>
+    <string name="channel_views_name">Outils flottants</string>
+    <string name="crop_free">Libre</string>
+    <string name="current_path">Actuel : %s</string>
+    <string name="delete_failed">Échec de la suppression</string>
+    <string name="delete_file_message">Ce fichier sera définitivement supprimé de votre stockage.</string>
+    <string name="delete_file_title">Supprimer le fichier ?</string>
+    <string name="delete_gif_message">Voulez-vous vraiment supprimer ce GIF ?</string>
+    <string name="delete_gif_title">Supprimer le GIF</string>
+    <string name="delete_image_message">Voulez-vous vraiment supprimer cette image ?</string>
+    <string name="delete_image_title">Supprimer l\'image</string>
+    <string name="deleted_successfully">Supprimé avec succès</string>
+    <string name="directory_selected">Dossier sélectionné</string>
+    <string name="emoji_description">Émoji</string>
+    <string name="enter_new_name">Saisissez un nouveau nom</string>
+    <string name="enter_seconds_error">Veuillez saisir les secondes</string>
+    <string name="error_try_again">Une erreur s\'est produite. Veuillez réessayer.</string>
+    <string name="failed_load_image">Impossible de charger l\'image</string>
+    <string name="feedback_counter">%1$d / %2$d</string>
+    <string name="feedback_empty">Le commentaire ne peut pas être vide</string>
+    <string name="feedback_failed">Échec de l\'envoi du commentaire. Veuillez réessayer.</string>
+    <string name="feedback_hint">Écrivez votre commentaire ici…</string>
+    <string name="feedback_thanks">Merci pour votre précieux commentaire ! 🙏</string>
+    <string name="feedback_title">🌟 Partagez votre expérience avec nous</string>
+    <string name="gif_select_area">Sélectionnez la zone à enregistrer</string>
+    <string name="gif_time_limit_tip">Terminez l\'enregistrement en moins de 15 secondes. Le fichier sera enregistré automatiquement.</string>
+    <string name="image_delete_failed">Échec de la suppression de l\'image</string>
+    <string name="image_deleted">Image supprimée</string>
+    <string name="label_rotation">Rotation</string>
+    <string name="mic_error">⚠️ Je ne vous ai pas entendu. Réessayez.</string>
+    <string name="mic_listening">🎙️ Écoute…</string>
+    <string name="mic_processing">🕓 Traitement…</string>
+    <string name="mic_recognized">✅ Parole reconnue</string>
+    <string name="name_empty">Le nom ne peut pas être vide</string>
+    <string name="no_directory_selected">Aucun dossier sélectionné</string>
+    <string name="notif_camera_text">La caméra frontale est affichée à l\'écran</string>
+    <string name="notif_camera_title">Caméra frontale activée</string>
+    <string name="notif_recording_in_progress">Enregistrement en cours</string>
+    <string name="notif_recording_paused">Enregistrement en pause</string>
+    <string name="notif_screenshot_active">Bouton de capture activé</string>
+    <string name="notif_service_running">En cours d\'exécution</string>
+    <string name="notif_stop_recording">Arrêter l\'enregistrement</string>
+    <string name="notif_toolbox_active">Boîte à outils activée</string>
+    <string name="notif_views_title">Outils flottants</string>
+    <string name="original_resolution">(Original : %dp)</string>
+    <string name="percent_value">%d %%</string>
+    <string name="permission_required_recording">Des autorisations sont nécessaires pour enregistrer</string>
+    <string name="play_pause">Lecture / Pause</string>
+    <string name="play_store_unavailable">Le Play Store n\'est pas disponible</string>
+    <string name="position_counter">%1$d / %2$d</string>
+    <string name="quality_high">Élevée</string>
+    <string name="quality_low">Faible</string>
+    <string name="quality_medium">Moyenne</string>
+    <string name="rate_on_play_store">Noter sur le Play Store</string>
+    <string name="rate_select_rating">Veuillez choisir une note</string>
+    <string name="rate_title_5_star">C\'est le reflet de votre soutien exceptionnel, et nous en sommes honorés.</string>
+    <string name="rate_title_default">🌟 Une note de 5 étoiles compte énormément pour nous ! 🌍💛</string>
+    <string name="rate_title_low">Presque ! Nous aimerions gagner cette étoile de plus — dites-nous comment nous améliorer.</string>
+    <string name="recording_start_error">Impossible de démarrer l\'enregistrement</string>
+    <string name="recording_started">Enregistrement démarré</string>
+    <string name="recording_stopped">Enregistrement arrêté</string>
+    <string name="rename_failed">Échec du renommage</string>
+    <string name="rename_video_title">Renommer la vidéo</string>
+    <string name="renamed_successfully">Renommé avec succès</string>
+    <string name="save_imported_sticker">Enregistrer l\'autocollant importé</string>
+    <string name="screen_capture_data_missing">L\'autorisation de capture d\'écran est manquante. Veuillez réessayer.</string>
+    <string name="screen_recorder_title">Enregistreur d\'écran</string>
+    <string name="screenshot_deleted">Capture d\'écran supprimée</string>
+    <string name="seconds_hint">Secondes</string>
+    <string name="share_app_message">Salut, télécharge cette super appli ici : %s</string>
+    <string name="share_app_subject">Découvre cette appli !</string>
+    <string name="share_image">Partager l\'image</string>
+    <string name="share_screenshot">Partager la capture d\'écran</string>
+    <string name="share_via">Partager via</string>
+    <string name="share_video_via">Partager la vidéo via</string>
+    <string name="size_gb">%s Go</string>
+    <string name="size_kb">%s Ko</string>
+    <string name="size_mb">%s Mo</string>
+    <string name="sticker_burn_failed">Impossible d\'ajouter l\'autocollant %d. Veuillez réessayer.</string>
+    <string name="sticker_progress">Autocollant %1$d/%2$d : %3$d %%</string>
+    <string name="storage_used_total">%1$s/%2$s Go</string>
+    <string name="submit">Envoyer</string>
+    <string name="submit_feedback">Envoyer un commentaire</string>
+    <string name="take_screenshot">Prendre une capture d\'écran</string>
+    <string name="video_thumbnail">Miniature de la vidéo</string>
+    <string name="yesterday">Hier</string>
+    <string name="app_not_installed">Application non installée</string>
+    <string name="delete_draft_message">Le brouillon enregistré sera définitivement supprimé.</string>
+    <string name="delete_draft_title">Supprimer le brouillon ?</string>
+    <string name="delete_label">Supprimer</string>
+    <string name="done_label">Terminé</string>
+    <string name="drafts">Brouillons</string>
+    <string name="exit_before_saving_title">Quitter sans enregistrer ?</string>
+    <string name="exit_directly">Quitter directement</string>
+    <string name="export_success_back">Retour</string>
+    <string name="export_success_home">Accueil</string>
+    <string name="export_success_title">Enregistré</string>
+    <string name="gif_short">GIF</string>
+    <string name="record_failed">Impossible d\'enregistrer l\'audio.</string>
+    <string name="record_move_playhead">Déplacez la tête de lecture avant la fin de la vidéo.</string>
+    <string name="record_permission_denied">Autorisation du micro refusée. Vous pouvez l\'activer dans les paramètres de l\'appli.</string>
+    <string name="record_permission_message">L\'autorisation du micro est nécessaire pour enregistrer une voix sur votre vidéo.</string>
+    <string name="record_too_short">Enregistrement trop court.</string>
+    <string name="save_as_draft">Enregistrer comme brouillon</string>
+    <string name="share_email">E-mail</string>
+    <string name="share_instagram">Instagram</string>
+    <string name="share_other">Autre</string>
+    <string name="share_whatsapp">WhatsApp</string>
+    <string name="speed_label">Vitesse</string>
+    <string name="trim_short">Couper</string>
+    <string name="voice_title">Voix</string>
+    <string name="volume_label">Volume</string>
+    <string name="discard">Ignorer</string>
+    <string name="unsaved_changes_title">Modifications non enregistrées</string>
+    <string name="unsaved_changes_message">Vous avez des modifications non enregistrées. Voulez-vous les enregistrer avant de quitter ?</string>
+    <string name="video_volume_label">Volume de la vidéo</string>
+    <plurals name="dialog_delete_images">
+        <item quantity="one">Voulez-vous vraiment supprimer %d image ?</item>
+        <item quantity="many">Voulez-vous vraiment supprimer %d images ?</item>
+        <item quantity="other">Voulez-vous vraiment supprimer %d images ?</item>
+    </plurals>
+    <string name="quality_original">Originale</string>
+    <string name="audio_source_mute">Muet</string>
+    <string name="audio_source_microphone">Microphone</string>
+    <string name="countdown_range_error">Saisissez un nombre entre %1$d et %2$d</string>
+    <string name="fps_30_recommended">30 FPS (recommandé)</string>
+    <string name="fps_30_short">30 FPS</string>
+</resources>

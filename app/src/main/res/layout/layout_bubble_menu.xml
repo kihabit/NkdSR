@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Floating bubble menu (XRecorder style): full-screen dim layer, ✕ over the bubble and
+     items fanned out in a half-circle. Item / ✕ positions are set in code (x/y), so the
+     items keep their natural size and only translate/scale/fade. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/menuRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+
+    <View
+        android:id="@+id/dimLayer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:alpha="0"
+        android:background="#59000000"
+        android:clickable="true"
+        android:focusable="false" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/menuHome"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_bubble_menu_item"
+        android:clickable="true"
+        android:contentDescription="@string/notif_home"
+        android:elevation="6dp"
+        android:focusable="true"
+        android:padding="15dp"
+        android:scaleType="fitCenter"
+        android:visibility="invisible" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/menuRecord"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_bubble_menu_item"
+        android:clickable="true"
+        android:contentDescription="@string/notif_record"
+        android:elevation="6dp"
+        android:focusable="true"
+        android:padding="15dp"
+        android:scaleType="fitCenter"
+        android:visibility="invisible" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/menuTools"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_bubble_menu_item"
+        android:clickable="true"
+        android:contentDescription="@string/notif_tools"
+        android:elevation="6dp"
+        android:focusable="true"
+        android:padding="15dp"
+        android:scaleType="fitCenter"
+        android:visibility="invisible" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/menuGif"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_bubble_menu_item"
+        android:clickable="true"
+        android:contentDescription="@string/title_gif"
+        android:elevation="6dp"
+        android:focusable="true"
+        android:padding="15dp"
+        android:scaleType="fitCenter"
+        android:visibility="invisible" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/btnMenuClose"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_bubble_menu_close"
+        android:clickable="true"
+        android:contentDescription="@string/cancel"
+        android:focusable="true"
+        android:padding="16dp"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_close"
+        android:tint="#FFFFFFFF" />
+</FrameLayout>

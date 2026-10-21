@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/selectionToolbar"
+    android:layout_width="match_parent"
+    android:layout_height="56dp"
+    android:background="?attr/colorSurface"
+    android:elevation="4dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:visibility="gone">
+
+    <!-- Close button -->
+    <androidx.appcompat.widget.AppCompatImageButton
+        android:id="@+id/closeSelectionButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/close_selection"
+        android:src="@drawable/ic_close"
+        android:tint="@color/red"
+        app:tint="@color/red" />
+
+    <!-- Selection count text -->
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/selectionCountText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_weight="1"
+        tools:text="0 Selected"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <!-- Select All button -->
+    <ImageButton
+        android:id="@+id/selectAllButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/select_all"
+        android:src="@drawable/ic_select_all" />
+
+    <!-- Share button -->
+    <ImageButton
+        android:id="@+id/shareButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/share"
+        android:src="@drawable/ic_share" />
+
+    <!-- Delete button -->
+    <ImageButton
+        android:id="@+id/deleteButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/delete"
+        android:src="@drawable/ic_delete"
+        app:tint="@color/error" />
+
+</LinearLayout>

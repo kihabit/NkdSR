@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- XRecorder-style delete zone (full-screen, not touchable window, kept BELOW the bubbles).
+     Gradient height and circle bottom margin are set in code (35% of screen, nav-bar inset). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/deleteZoneContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:visibility="gone">
+
+    <View
+        android:id="@+id/deleteGradient"
+        android:layout_width="match_parent"
+        android:layout_height="240dp"
+        android:layout_gravity="bottom"
+        android:alpha="0"
+        android:background="@drawable/bg_delete_zone_gradient" />
+
+    <FrameLayout
+        android:id="@+id/deleteCircle"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="72dp"
+        android:background="@drawable/bg_delete_zone_circle">
+
+        <ImageView
+            android:id="@+id/ivDelete"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_close"
+            android:tint="#FFFFFFFF" />
+    </FrameLayout>
+</FrameLayout>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Outer subtle ring -->
+    <path
+        android:fillAlpha="0.15"
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,2A10,10 0 1,0 12,22A10,10 0 1,0 12,2Z" />
+
+    <!-- Center circle -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,8A4,4 0 1,0 12,16A4,4 0 1,0 12,8Z" />
+
+    <!-- Horizontal line -->
+    <path
+        android:pathData="M4,12 L8,12"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M16,12 L20,12"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round" />
+
+    <!-- Vertical line -->
+    <path
+        android:pathData="M12,4 L12,8"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round" />
+
+    <path
+        android:pathData="M12,16 L12,20"
+        android:strokeWidth="1.8"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round" />
+
+</vector>

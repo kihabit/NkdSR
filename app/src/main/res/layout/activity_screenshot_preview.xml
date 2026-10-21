@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <!-- Preview Container - positioned at top right -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/previewContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="36dp"
+        android:layout_marginEnd="8dp"
+        android:background="@drawable/screenshot_preview_bg"
+        android:clickable="true"
+        android:elevation="8dp"
+        android:focusable="true"
+        android:padding="8dp">
+
+        <!-- Screenshot Thumbnail -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/previewCard"
+            android:layout_width="120dp"
+            android:layout_height="160dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="0dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:id="@+id/previewImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="@string/screenshot_preview"
+                android:scaleType="centerCrop" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+
+        <!-- Action buttons below thumbnail -->
+        <LinearLayout
+            android:id="@+id/actionButtons"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/previewCard">
+
+            <!-- Share button -->
+            <ImageButton
+                android:id="@+id/shareButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/action_button_bg"
+                android:contentDescription="@string/share"
+                android:padding="6dp"
+                android:src="@drawable/ic_share" />
+
+            <!-- Delete button -->
+            <ImageButton
+                android:id="@+id/deleteButton"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/action_button_bg"
+                android:contentDescription="@string/delete"
+                android:padding="6dp"
+                android:src="@drawable/ic_delete"
+                app:tint="@color/error" />
+
+        </LinearLayout>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>

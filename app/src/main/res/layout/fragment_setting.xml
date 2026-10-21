@@ -1,0 +1,735 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/settingCard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:cardElevation="0dp"
+            app:cardMaxElevation="0dp"
+            app:cardPreventCornerOverlap="true"
+            app:cardUseCompatPadding="false"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="40dp">
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/settingLabel"
+                    style="@style/TextAppearance.Material3.HeadlineSmall.Emphasized"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="8dp"
+                    android:gravity="center"
+                    android:text="@string/settings"
+                    android:textAlignment="gravity"
+                    android:textStyle="bold"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/videoLabel"
+                    style="@style/TextAppearance.Material3.BodyLarge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="@string/video"
+                    android:textAlignment="gravity"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textStyle="normal"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/settingLabel" />
+
+                <!-- Video Quality -->
+                <RelativeLayout
+                    android:id="@+id/videoQualitySection"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/videoLabel">
+
+                    <ImageView
+                        android:id="@+id/videoQualityIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="@string/video_quality_label"
+                        android:src="@drawable/ic_videoq"
+                        app:tint="?attr/colorOnSurface" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/videoQualityLabel"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="12dp"
+                        android:layout_toEndOf="@id/videoQualityIcon"
+                        android:layout_toStartOf="@id/selectVideoQualityCard"
+                        android:layout_marginEnd="8dp"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:text="@string/video_quality_label"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/selectVideoQualityCard"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:padding="8dp"
+                        app:cardBackgroundColor="@color/cardBackgroundColor"
+                        app:cardPreventCornerOverlap="true"
+                        app:cardUseCompatPadding="true">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/selectedVideoQuality"
+                            android:maxWidth="160dp"
+                            android:maxLines="1"
+                            android:ellipsize="end"
+                            style="@style/TextAppearance.Material3.BodyLarge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginTop="2dp"
+                            android:layout_marginEnd="2dp"
+                            android:layout_marginBottom="2dp"
+                            android:drawableEnd="@drawable/outline_arrow_forward_ios"
+                            android:padding="4dp"
+                            tools:text="Video Quality"
+                            android:textColor="?attr/colorOnSurface" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </RelativeLayout>
+
+                <!-- Frame Rate -->
+                <RelativeLayout
+                    android:id="@+id/frameRateSection"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/videoQualitySection">
+
+                    <ImageView
+                        android:id="@+id/frameRateIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="@string/frame_rate"
+                        android:src="@drawable/ic_framerate"
+                        app:tint="?attr/colorOnSurface" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/frameRateLabel"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="12dp"
+                        android:layout_toEndOf="@id/frameRateIcon"
+                        android:layout_toStartOf="@id/frameRateCard"
+                        android:layout_marginEnd="8dp"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:text="@string/frame_rate"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/frameRateCard"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:padding="8dp"
+                        app:cardBackgroundColor="@color/cardBackgroundColor"
+                        app:cardPreventCornerOverlap="true"
+                        app:cardUseCompatPadding="true">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/frameRateQuality"
+                            android:maxWidth="160dp"
+                            android:maxLines="1"
+                            android:ellipsize="end"
+                            style="@style/TextAppearance.Material3.BodyLarge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginTop="2dp"
+                            android:layout_marginEnd="2dp"
+                            android:layout_marginBottom="2dp"
+                            android:drawableEnd="@drawable/outline_arrow_forward_ios"
+                            android:padding="4dp"
+                            android:text="@string/fps_30_short"
+                            android:textColor="?attr/colorOnSurface" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </RelativeLayout>
+
+                <!-- Audio Label -->
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/audioLabel"
+                    style="@style/TextAppearance.Material3.BodyLarge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="@string/audio"
+                    android:textAlignment="gravity"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textStyle="normal"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/frameRateSection" />
+
+                <!-- Audio Source -->
+                <RelativeLayout
+                    android:id="@+id/audioSourceSection"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/audioLabel">
+
+                    <ImageView
+                        android:id="@+id/audioSourceIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="@string/audio_source_label"
+                        android:src="@drawable/ic_audio_setting"
+                        app:tint="?attr/colorOnSurface" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/audioSourceLabel"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="12dp"
+                        android:layout_toEndOf="@id/audioSourceIcon"
+                        android:layout_toStartOf="@id/selecAudioSourceCard"
+                        android:layout_marginEnd="8dp"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:text="@string/audio_source_label"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/selecAudioSourceCard"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:padding="8dp"
+                        app:cardBackgroundColor="@color/cardBackgroundColor"
+                        app:cardPreventCornerOverlap="true"
+                        app:cardUseCompatPadding="true">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/selectedAudioSource"
+                            android:maxWidth="160dp"
+                            android:maxLines="1"
+                            android:ellipsize="end"
+                            style="@style/TextAppearance.Material3.BodyLarge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginTop="2dp"
+                            android:layout_marginEnd="2dp"
+                            android:layout_marginBottom="2dp"
+                            android:drawableEnd="@drawable/outline_arrow_forward_ios"
+                            android:padding="4dp"
+                            android:text="@string/audio_source_microphone"
+                            android:textColor="?attr/colorOnSurface" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </RelativeLayout>
+
+                <!-- Video Settings Label -->
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/videoSettingsLabel"
+                    style="@style/TextAppearance.Material3.BodyLarge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="@string/video_settings"
+                    android:textAlignment="gravity"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textStyle="normal"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/audioSourceSection" />
+
+                <!-- Save Location -->
+                <RelativeLayout
+                    android:id="@+id/locationPath"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/videoSettingsLabel">
+
+                    <ImageView
+                        android:id="@+id/locationIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:contentDescription="@string/save_location"
+                        android:src="@drawable/ic_save_outline"
+                        app:tint="?attr/colorOnSurface" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/locationText"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_toEndOf="@id/locationIcon"
+                        android:text="@string/save_location"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/selectLocationPath"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/locationText"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginEnd="16dp"
+                        app:cardBackgroundColor="@color/cardBackgroundColor"
+                        app:cardCornerRadius="8dp"
+                        app:cardElevation="4dp"
+                        app:cardPreventCornerOverlap="true"
+                        app:cardUseCompatPadding="true">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/selectedPathText"
+                            style="@style/TextAppearance.Material3.BodyLarge"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </RelativeLayout>
+
+                <!-- Control Label -->
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/controlLabel"
+                    style="@style/TextAppearance.Material3.BodyLarge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="@string/control"
+                    android:textAlignment="gravity"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textStyle="normal"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/locationPath" />
+
+                <!-- Countdown Before Start -->
+                <RelativeLayout
+                    android:id="@+id/countdownBeforeStart"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/controlLabel">
+
+                    <ImageView
+                        android:id="@+id/countdownBeforeStartIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="@string/countdown_before_start"
+                        android:src="@drawable/ic_countdown_before_start"
+                        app:tint="?attr/colorOnSurface" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/countdownBeforeStartText"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_toEndOf="@id/countdownBeforeStartIcon"
+                        android:text="@string/countdown_before_start"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchForCountDown"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/countdownSeconds"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@id/countdownBeforeStartText"
+                        android:layout_alignStart="@+id/countdownBeforeStartText"
+                        android:layout_marginTop="8dp"
+                        tools:text="Countdown Time: 3 Sec"
+                        android:visibility="gone" />
+
+                </RelativeLayout>
+
+                <!-- Keep Recording -->
+                <RelativeLayout
+                    android:id="@+id/keepRecordingInOffScreen"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/countdownBeforeStart">
+
+                    <ImageView
+                        android:id="@+id/keepRecordingIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="@string/keep_recording_screen_off"
+                        android:src="@drawable/ic_keeprecording"
+                        app:tint="?attr/colorOnSurface" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/keepRecordingText"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_toStartOf="@id/switchForKeepRecording"
+                        android:layout_toEndOf="@id/keepRecordingIcon"
+                        android:text="@string/keep_recording_screen_off"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchForKeepRecording"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true" />
+
+                </RelativeLayout>
+
+                <!-- Hide Floating Ball -->
+                <RelativeLayout
+                    android:id="@+id/hideFloatingBall"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/keepRecordingInOffScreen">
+
+                    <ImageView
+                        android:id="@+id/hideFloatingBallIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="@string/hide_floating_ball_recording"
+                        android:src="@drawable/ic_hide_ball"
+                        app:tint="?attr/colorOnSurface" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/hideFloatingBallIconText"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="12dp"
+                        android:layout_marginEnd="8dp"
+                        android:layout_toStartOf="@id/switchForHideFloatingBall"
+                        android:layout_toEndOf="@id/hideFloatingBallIcon"
+                        android:text="@string/hide_floating_ball_recording"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchForHideFloatingBall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true" />
+
+                </RelativeLayout>
+
+                <!-- Notification toolbar (always-on IDLE panel) -->
+                <RelativeLayout
+                    android:id="@+id/notificationToolbar"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/hideFloatingBall">
+
+                    <ImageView
+                        android:id="@+id/notificationToolbarIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="@string/notif_toolbar_title"
+                        android:src="@drawable/ic_notif_small"
+                        app:tint="?attr/colorOnSurface" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/notificationToolbarText"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="12dp"
+                        android:layout_toEndOf="@id/notificationToolbarIcon"
+                        android:text="@string/notif_toolbar_title"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/switchForNotificationToolbar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true" />
+
+                </RelativeLayout>
+
+                <!-- More Label -->
+                <com.google.android.material.textview.MaterialTextView
+                    android:id="@+id/moreLabel"
+                    style="@style/TextAppearance.Material3.BodyLarge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"
+                    android:text="@string/more"
+                    android:textAlignment="gravity"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textStyle="normal"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/notificationToolbar" />
+
+                <!-- Language -->
+                <RelativeLayout
+                    android:id="@+id/languageSection"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/moreLabel">
+
+                    <ImageView
+                        android:id="@+id/languageIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="@string/language"
+                        android:src="@drawable/ic_language"
+                        app:tint="?attr/colorOnSurface" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/languageText"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="12dp"
+                        android:layout_toEndOf="@id/languageIcon"
+                        android:layout_toStartOf="@id/currentLanguageCard"
+                        android:layout_marginEnd="8dp"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:text="@string/language"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/currentLanguageCard"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:padding="8dp"
+                        app:cardBackgroundColor="@color/cardBackgroundColor"
+                        app:cardPreventCornerOverlap="true"
+                        app:cardUseCompatPadding="true">
+
+                        <com.google.android.material.textview.MaterialTextView
+                            android:id="@+id/currentLanguageText"
+                            android:maxWidth="160dp"
+                            android:maxLines="1"
+                            android:ellipsize="end"
+                            style="@style/TextAppearance.Material3.BodyLarge"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="2dp"
+                            android:layout_marginTop="2dp"
+                            android:layout_marginEnd="2dp"
+                            android:layout_marginBottom="2dp"
+                            android:drawableEnd="@drawable/outline_arrow_forward_ios"
+                            android:padding="4dp"
+                            tools:text="English"
+                            android:textColor="?attr/colorOnSurface" />
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                </RelativeLayout>
+
+                <!-- Rate Us -->
+                <RelativeLayout
+                    android:id="@+id/rateUsSection"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginEnd="16dp"
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/languageSection">
+
+                    <ImageView
+                        android:id="@+id/rateUsIcon"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="@string/rate_us"
+                        android:src="@drawable/ic_star_rate"
+                        app:tint="#FF5722" />
+
+                    <com.google.android.material.textview.MaterialTextView
+                        android:id="@+id/rateUsText"
+                        style="@style/TextAppearance.Material3.BodyLarge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginStart="12dp"
+                        android:layout_toEndOf="@id/rateUsIcon"
+                        android:text="@string/rate_us"
+                        android:textColor="?attr/colorOnSurface" />
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:contentDescription="@null"
+                        android:src="@drawable/outline_arrow_forward_ios"
+                        app:tint="?attr/colorOnSurfaceVariant" />
+
+                </RelativeLayout>
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

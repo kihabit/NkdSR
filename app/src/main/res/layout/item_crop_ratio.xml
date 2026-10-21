@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="72dp"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Ratio shape icon -->
+    <FrameLayout
+        android:id="@+id/ratioIconContainer"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:gravity="center">
+
+        <View
+            android:id="@+id/ratioIconView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_ratio_icon_unselected" />
+    </FrameLayout>
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/ratioLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:fontFamily="sans-serif-condensed"
+        android:textColor="#99FFFFFF"
+        android:textSize="11sp" />
+
+</LinearLayout>

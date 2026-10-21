@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- RECORDING notification toolbar (Android 12+): Pause/Resume (one is GONE) / Stop / Tools.
+     FIXED cells (no RemoteViews.addView — that duplicated the buttons on Android 9 when the
+     notification was re-applied). Labels use dp on purpose: the collapsed notification has a
+     fixed height, so they must not grow with the system font size. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/panelRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_notification_panel"
+    android:gravity="center_vertical"
+    android:minHeight="44dp"
+    android:orientation="horizontal"
+    android:paddingStart="4dp"
+    android:paddingTop="3dp"
+    android:paddingEnd="4dp"
+    android:paddingBottom="3dp">
+
+    <LinearLayout
+        android:id="@+id/cellPause"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconPause"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@string/notif_pause"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_notif_pause" />
+
+        <TextView
+            android:id="@+id/labelPause"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="@string/notif_pause"
+            android:textColor="#FFFFFFFF"
+            android:textSize="11dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cellResume"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical" android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/iconResume"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@string/notif_resume"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_notif_resume" />
+
+        <TextView
+            android:id="@+id/labelResume"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="@string/notif_resume"
+            android:textColor="#FFFFFFFF"
+            android:textSize="11dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cellStop"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconStop"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@string/notif_stop"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_notif_stop" />
+
+        <TextView
+            android:id="@+id/labelStop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="@string/notif_stop"
+            android:textColor="#FFFFFFFF"
+            android:textSize="11dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/cellTools"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/iconTools"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:contentDescription="@string/notif_tools"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_notif_tools" />
+
+        <TextView
+            android:id="@+id/labelTools"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="@string/notif_tools"
+            android:textColor="#FFFFFFFF"
+            android:textSize="11dp" />
+    </LinearLayout>
+</LinearLayout>

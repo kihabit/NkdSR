@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/clipRoot"
+    android:layout_width="wrap_content"
+    android:layout_height="40dp"
+    android:background="@color/primaryColor">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/clipLabel"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center"
+        android:contentDescription="@string/sticker_label"
+        android:textColor="@android:color/white"
+        android:textSize="12sp" />
+
+    <View
+        android:id="@+id/leftHandle"
+        android:layout_width="10dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="@drawable/ic_video_thumb_handle" />
+
+    <View
+        android:id="@+id/rightHandle"
+        android:layout_width="10dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="end"
+        android:background="@drawable/ic_video_thumb_handle" />
+
+</FrameLayout>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primaryColor">#FF7700</color>
+    <color name="secondaryColor">#FF9933</color>
+    <color name="onPrimaryColor">#FF000000</color>
+    <color name="onSecondaryColor">#FF000000</color>
+    <color name="surfaceColor">#1E1E1E</color>
+    <color name="onSurfaceColor">#FFFFFFFF</color>
+    <color name="cardBackgroundColor">#2C2C2C</color>
+    <color name="cardBackgroundColorVideoList">#252525</color>
+    <color name="shadow_color">#7F000000</color>
+    <color name="gray2">#E5CCCCCC</color>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="gray">#66666565</color>
+    <color name="tool_bg">#151414</color>
+    <color name="semi_black_transparent">#99000000</color>
+    <color name="bottomNavBackground">#1E1E1E</color>
+    <color name="icon_color">#FFFFFFFF</color>
+    <color name="menu_bg_color">#2C2C2C</color>
+    <!-- Floating Tools popup (dialog_toolbox_layout) — dark system theme -->
+    <color name="toolbox_card_bg">#FF1E1E1E</color>
+    <color name="toolbox_text">#FFF2F2F2</color>
+    <color name="toolbox_subtext">#FFB0B0B0</color>
+    <color name="toolbox_chip_bg">#FF2E2E2E</color>
+    <color name="toolbox_divider">#1FFFFFFF</color>
+    <color name="toolbox_switch_thumb_off">#FFBDBDBD</color>
+    <color name="toolbox_switch_track_off">#4DFFFFFF</color>
+</resources>

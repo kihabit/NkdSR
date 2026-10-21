@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tools popup card: white (dark grey in dark theme), 20dp corners -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/toolbox_card_bg" />
+    <corners android:radius="20dp" />
+</shape>

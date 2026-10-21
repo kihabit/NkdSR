@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#40000000" /> <!-- Background color -->
+    <corners android:radius="30dp" />
+
+    <!--    <corners-->
+    <!--        android:topRightRadius="@dimen/_30sdp"-->
+    <!--        android:bottomRightRadius="@dimen/_30sdp"-->
+    <!--        android:topLeftRadius="0dp"-->
+    <!--        android:bottomLeftRadius="0dp" />-->
+
+    <!-- Adjust the radius to be half of the height/width for a circle -->
+</shape>

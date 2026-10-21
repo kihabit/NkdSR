@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One song row on the My Music screen -->
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="64dp"
+    android:paddingStart="16dp"
+    android:paddingTop="10dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="10dp">
+
+    <!-- 44dp rounded dark square: album art, or a music-note icon -->
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/albumImage"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:background="@drawable/bg_music_art"
+        android:contentDescription="@null"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/albumTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="8dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@id/albumSubTitle"
+        app:layout_constraintEnd_toStartOf="@+id/useButton"
+        app:layout_constraintStart_toEndOf="@id/albumImage"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/albumSubTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginEnd="8dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:singleLine="true"
+        android:textColor="#FF9E9E9E"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/useButton"
+        app:layout_constraintStart_toEndOf="@id/albumImage"
+        app:layout_constraintTop_toBottomOf="@id/albumTitle" />
+
+    <!-- ✅ "Use" — only visible on the selected (previewing) row -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/useButton"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
+        android:minWidth="0dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:text="@string/audio_use"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        app:backgroundTint="@color/primaryColor"
+        app:cornerRadius="18dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/addMusicButton"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- ✅ Play / pause preview indicator (tapping the row does the same) -->
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/addMusicButton"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@null"
+        android:padding="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_play"
+        app:tint="@color/white" />
+</androidx.constraintlayout.widget.ConstraintLayout>
