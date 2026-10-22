@@ -382,4 +382,16 @@
     <string name="auto_for_this_phone">%1$s para este celular</string>
     <string name="overlay_permission_hint">Encontre o Screen Rec na lista e ative-o</string>
     <string name="facecam_shape_title">Formato da câmera facial</string>
+    <string name="facecam_face_only">Só o rosto</string>
+    <string name="facecam_face_only_unsupported">Só o rosto não é compatível com este telefone</string>
+    <string name="audio_source_sheet_title">Fonte de áudio</string>
+    <string name="audio_source_mute_desc">Sem som</string>
+    <string name="audio_source_mic_desc">Gravar sua voz</string>
+    <string name="audio_source_mic_denied">Permissão do microfone negada. Gravando sem som.</string>
+    <string name="audio_source_next_recording">Vale para a próxima gravação</string>
+    <string name="settings_section_storage">Armazenamento</string>
+    <string name="settings_section_recording">Gravação</string>
+    <string name="settings_section_floating_controls">Controles flutuantes</string>
+    <string name="settings_section_about">Sobre</string>
+    <string name="countdown_seconds_short">%d s</string>
 </resources>

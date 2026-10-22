@@ -49,9 +49,9 @@ import com.nkd.screenrecorder.databinding.LayoutBubbleMenuBinding
 import com.nkd.screenrecorder.databinding.LayoutRecordingFlipBinding
 import com.nkd.screenrecorder.databinding.ServiceScreenShotBinding
 import com.nkd.screenrecorder.fragments.SettingFragment
-import com.nkd.screenrecorder.fragments.SettingFragment.Companion.AUDIO_SOURCE
 import com.nkd.screenrecorder.fragments.SettingFragment.Companion.PREFS_NAME
 import com.nkd.screenrecorder.fragments.SettingFragment.Companion.SHOW_COUNT_DOWN
+import com.nkd.screenrecorder.utils.AudioSourcePrefs
 import com.nkd.screenrecorder.utils.VideoQualityPrefs
 import com.nkd.screenrecorder.utils.RecordingOptionsSheet
 import com.nkd.screenrecorder.utils.BubbleDeleteZone
@@ -771,7 +771,7 @@ class SSViewService : Service() {
         ).apply {
             gravity = Gravity.TOP or Gravity.START
             x = -20
-            y = 100
+            y = initialToolboxY(buttonSizePx)   // left edge, vertically centred
         }
 
         deleteZone.ensureWindow()   // delete zone must sit BELOW the bubble (window order)
@@ -812,6 +812,32 @@ class SSViewService : Service() {
         isToolboxExpanded = false
         scheduleBubbleDim()
         applyFloatingViewsHidden()   // added while a recording is already running
+    }
+
+    /**
+     * Starting y of the floating button: the middle of the screen height (portrait or
+     * landscape), kept between the status bar and the navigation bar.
+     */
+    private fun initialToolboxY(sizePx: Int): Int {
+        val screenH: Int
+        val topInset: Int
+        val bottomInset: Int
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val metrics = windowManager.currentWindowMetrics
+            val bars = metrics.windowInsets.getInsetsIgnoringVisibility(
+                android.view.WindowInsets.Type.systemBars() or android.view.WindowInsets.Type.displayCutout()
+            )
+            screenH = metrics.bounds.height()
+            topInset = bars.top
+            bottomInset = bars.bottom
+        } else {
+            screenH = resources.displayMetrics.heightPixels
+            topInset = 24.dpToPx()
+            bottomInset = 0   // heightPixels already excludes the navigation bar here
+        }
+        val minY = topInset
+        val maxY = maxOf(minY, screenH - bottomInset - sizePx)
+        return ((screenH - sizePx) / 2).coerceIn(minY, maxY)
     }
 
     private fun hideToolbox() {
@@ -1532,32 +1558,22 @@ class SSViewService : Service() {
                 }
             }
 
-            // Mute / Microphone — nothing saved = Microphone (same as the service)
-            val audioSources = resources.getStringArray(R.array.audio_source)
-            selectedAudioSource.text = audioSources[SettingFragment.audioSourceIndex(preference)]
+            // Audio source (AudioSourcePrefs — same key/sheet as Home and Settings)
+            selectedAudioSource.text = AudioSourcePrefs.summary(themeContext)
 
             selectAudioSourceCard.setOnClickListener {
-                val alertBuilder = AlertDialog.Builder(themeContext).setTitle(getString(R.string.select_audio_source))
-                    .setSingleChoiceItems(
-                        R.array.audio_source,
-                        SettingFragment.audioSourceIndex(preference),
-                    ) { dialogInterface, which ->
-                        preference.edit {
-                            putInt(AUDIO_SOURCE, which)
-                        }
-                        selectedAudioSource.text = audioSources[which]
-                        dialogInterface.dismiss()
+                RecordingOptionsSheet.showAudioSource(
+                    themeContext,
+                    overlay = true,
+                    // A service can't ask for RECORD_AUDIO — the app asks, then saves Mic / Mute
+                    requestMicPermission = {
                         toolboxDialog.dismiss()
+                        openAppAudioMicFlow()
                     }
-                val dialog = alertBuilder.create()
-                dialog.window?.apply {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
-                    } else {
-                        setType(WindowManager.LayoutParams.TYPE_PHONE)
-                    }
+                ) {
+                    selectedAudioSource.text = AudioSourcePrefs.summary(themeContext)
+                    toolboxDialog.dismiss()
                 }
-                dialog.show()
             }
 
             // Whole rows tappable (like Settings): switch rows toggle → same listener,
@@ -1629,6 +1645,22 @@ class SSViewService : Service() {
             )
         } catch (e: Exception) {
             Log.e(TAG, "Error opening the facecam permission flow", e)
+        }
+    }
+
+    /** Bring the app to the front to ask for RECORD_AUDIO (audio source → Microphone). */
+    private fun openAppAudioMicFlow() {
+        try {
+            startActivity(
+                Intent(this, MainActivity::class.java)
+                    .addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                Intent.FLAG_ACTIVITY_SINGLE_TOP
+                    )
+                    .putExtra(MainActivity.EXTRA_REQUEST_AUDIO_MIC, true)
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, "Error opening the microphone permission flow", e)
         }
     }
 

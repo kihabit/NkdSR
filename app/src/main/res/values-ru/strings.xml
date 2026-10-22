@@ -383,4 +383,16 @@
     <string name="auto_for_this_phone">%1$s для этого телефона</string>
     <string name="overlay_permission_hint">Найдите Screen Rec в списке и включите его</string>
     <string name="facecam_shape_title">Форма фронтальной камеры</string>
+    <string name="facecam_face_only">Только лицо</string>
+    <string name="facecam_face_only_unsupported">Режим «Только лицо» не поддерживается на этом телефоне</string>
+    <string name="audio_source_sheet_title">Источник звука</string>
+    <string name="audio_source_mute_desc">Без звука</string>
+    <string name="audio_source_mic_desc">Записывать ваш голос</string>
+    <string name="audio_source_mic_denied">Доступ к микрофону запрещён. Запись без звука.</string>
+    <string name="audio_source_next_recording">Применится к следующей записи</string>
+    <string name="settings_section_storage">Хранилище</string>
+    <string name="settings_section_recording">Запись</string>
+    <string name="settings_section_floating_controls">Плавающие элементы</string>
+    <string name="settings_section_about">О приложении</string>
+    <string name="countdown_seconds_short">%d с</string>
 </resources>

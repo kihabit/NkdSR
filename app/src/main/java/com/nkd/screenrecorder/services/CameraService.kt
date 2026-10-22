@@ -35,6 +35,7 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import com.nkd.screenrecorder.R
 import com.nkd.screenrecorder.activities.MainActivity
+import com.nkd.screenrecorder.utils.FaceOnlySegmenter
 import com.nkd.screenrecorder.utils.FacecamShapeSheet
 import com.nkd.screenrecorder.databinding.LayoutFloatingCameraViewBinding
 import com.nkd.screenrecorder.fragments.SettingFragment
@@ -61,6 +62,9 @@ class CameraService : Service() {
     private lateinit var params: WindowManager.LayoutParams
     private lateinit var values: Values
     private var isCircleMode = false
+    private var currentShape = FacecamShapeSheet.Shape.RECTANGLE
+    /** Running only while the shape is "Face only". */
+    private var faceOnly: FaceOnlySegmenter? = null
 
     /** Coarse facecam lifecycle state — distinguishes "window attached, camera opening" from
      *  "camera actually opened and streaming" (see [CameraListener.onCameraOpened] above).
@@ -85,8 +89,12 @@ class CameraService : Service() {
 
         const val PREFS_CAMERA_OVERLAY_POS = "camera_overlay_pos"
         const val PREFS_TOOLS_CAMERA: String = "tools_camera"
-        /** Saved facecam shape: true = circle, false/missing = rounded rectangle. */
-        private const val PREFS_FACECAM_CIRCLE = "facecam_shape_circle"
+        /** Last NORMAL facecam shape (RECTANGLE / CIRCLE name). "Face only" is never saved. */
+        private const val PREFS_FACECAM_NORMAL_SHAPE = "facecam_normal_shape"
+        /** Previous key — could also hold FACE_ONLY; read once if no normal shape is saved yet. */
+        private const val PREFS_FACECAM_SHAPE_OLD = "facecam_shape"
+        /** Older boolean key (true = circle), read once if no shape is saved yet. */
+        private const val PREFS_FACECAM_CIRCLE_OLD = "facecam_shape_circle"
         private const val RECT_CORNER_DP = 16
         /** Smallest circle where the 4 buttons on the diagonals don't overlap (see layoutButtonsForCircle). */
         private const val CIRCLE_MIN_DP = 124
@@ -213,6 +221,7 @@ class CameraService : Service() {
                     })
                 hideCamera.setOnClickListener {
                     mainHandler.removeCallbacks(cameraOpenTimeout)
+                    stopFaceOnly()
                     if (isWindowViewAdded) {
                         removeCameraWindow()
                     }
@@ -241,10 +250,7 @@ class CameraService : Service() {
                 setting.setOnClickListener {
                     // Themed context: a bare Service context can't resolve the Material theme
                     val sheetContext = ContextThemeWrapper(this@CameraService, R.style.Theme_NkdSR)
-                    FacecamShapeSheet.show(sheetContext, isCircleMode) { circle ->
-                        if (circle) setCircleMode() else applyRectangleMode()
-                        preferences.edit { putBoolean(PREFS_FACECAM_CIRCLE, circle) }
-                    }
+                    FacecamShapeSheet.show(sheetContext, currentShape) { shape -> applyShape(shape) }
                 }
                 values = Values()
 
@@ -284,9 +290,15 @@ class CameraService : Service() {
 
                     if (windowAdded) {
                         isWindowViewAdded = true
+                        // Low-res frames for "Face only" (the preview itself stays full quality)
+                        cameraView.frameProcessingMaxWidth = FaceOnlySegmenter.FRAME_MAX_SIZE
+                        cameraView.frameProcessingMaxHeight = FaceOnlySegmenter.FRAME_MAX_SIZE
+                        cameraView.frameProcessingExecutors = 1
+                        // Camera2's ImageReader can't output NV21 (throws) — it delivers small
+                        // YUV_420_888 frames, packed into NV21 by FaceOnlySegmenter
+                        cameraView.frameProcessingFormat = android.graphics.ImageFormat.YUV_420_888
                         // Restore the last chosen shape (rectangle by default)
-                        if (preferences.getBoolean(PREFS_FACECAM_CIRCLE, false)) setCircleMode()
-                        else applyRectangleMode()
+                        applyShape(savedShape(), save = false)
                         facecamState = FacecamState.OPENING_CAMERA
                         // ✅ Guard against opening twice if onStartCommand were somehow
                         // re-entered (e.g. a stray duplicate start intent) while a previous
@@ -359,6 +371,7 @@ class CameraService : Service() {
         mainHandler.removeCallbacks(cameraOpenTimeout)
         facecamState = FacecamState.FAILED
         isRunning = false
+        stopFaceOnly()
         if (isWindowViewAdded) removeCameraWindow()
         isWindowViewAdded = false
         if (::cameraViewBinding.isInitialized) {
@@ -374,6 +387,77 @@ class CameraService : Service() {
     }
 
     private val density get() = resources.displayMetrics.density
+
+    /** Shape to open with: the last normal shape (Rectangle / Circle), never "Face only". */
+    private fun savedShape(): FacecamShapeSheet.Shape {
+        val normal = listOf(FacecamShapeSheet.Shape.RECTANGLE, FacecamShapeSheet.Shape.CIRCLE)
+        fun parse(key: String) = preferences.getString(key, null)?.let { name -> normal.firstOrNull { it.name == name } }
+        return parse(PREFS_FACECAM_NORMAL_SHAPE)
+            ?: parse(PREFS_FACECAM_SHAPE_OLD)   // old saved FACE_ONLY → falls through
+            ?: if (preferences.getBoolean(PREFS_FACECAM_CIRCLE_OLD, false)) FacecamShapeSheet.Shape.CIRCLE
+            else FacecamShapeSheet.Shape.RECTANGLE
+    }
+
+    /** Applies a shape; by default saves it if it is a normal one ("Face only" lasts only until
+     *  the facecam closes). "Face only" uses the rectangle's size and buttons. */
+    private fun applyShape(shape: FacecamShapeSheet.Shape, save: Boolean = true) {
+        if (shape != FacecamShapeSheet.Shape.FACE_ONLY) stopFaceOnly()
+        currentShape = shape
+        when (shape) {
+            FacecamShapeSheet.Shape.RECTANGLE -> applyRectangleMode()
+            FacecamShapeSheet.Shape.CIRCLE -> setCircleMode()
+            FacecamShapeSheet.Shape.FACE_ONLY -> {
+                applyRectangleMode()
+                startFaceOnly()
+            }
+        }
+        if (save && shape != FacecamShapeSheet.Shape.FACE_ONLY) {
+            preferences.edit { putString(PREFS_FACECAM_NORMAL_SHAPE, shape.name) }
+        }
+    }
+
+    private fun startFaceOnly() {
+        if (faceOnly != null) return
+        val segmenter = FaceOnlySegmenter(
+            cameraViewBinding.cameraView,
+            cameraViewBinding.cameraFrameLayout,
+            isRecording = { RecordScreenService.isRecording || RecordScreenService.isPaused }
+        ) { duringRecording ->
+            // Library missing / failing / too slow (never "too slow" mid-recording) → Circle.
+            // During a recording: switch quietly, the message waits until the recording stops.
+            applyShape(FacecamShapeSheet.Shape.CIRCLE, save = false)   // keep the user's own normal shape
+            if (duringRecording) {
+                mainHandler.removeCallbacks(unsupportedAfterRecording)
+                mainHandler.postDelayed(unsupportedAfterRecording, 1_000L)
+            } else {
+                showFaceOnlyUnsupported()
+            }
+        }
+        faceOnly = segmenter
+        segmenter.start()   // on failure it reports itself through the callback above
+    }
+
+    private fun showFaceOnlyUnsupported() {
+        android.widget.Toast.makeText(
+            this, getString(R.string.facecam_face_only_unsupported), android.widget.Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    /** Shows the "Face only isn't supported" message once the recording has stopped. */
+    private val unsupportedAfterRecording = object : Runnable {
+        override fun run() {
+            if (RecordScreenService.isRecording || RecordScreenService.isPaused) {
+                mainHandler.postDelayed(this, 1_000L)
+            } else {
+                showFaceOnlyUnsupported()
+            }
+        }
+    }
+
+    private fun stopFaceOnly() {
+        faceOnly?.stop()
+        faceOnly = null
+    }
 
     /** Largest facecam window side while resizing (also caps the shape switch). */
     private fun maxWindowSize(): Int = max(800, (CIRCLE_MIN_DP * density).roundToInt())
@@ -569,6 +653,7 @@ class CameraService : Service() {
                     val action = motionEvent.action
                     when (action) {
                         MotionEvent.ACTION_UP -> {
+                            faceOnly?.setPaused(false)   // drag over → segmentation resumes
                             Log.e("CameraService", "up action performed")
                             Log.e("CameraService", "Camera Frame layout surface clicked")
                             cameraViewBinding.setting.isVisible = true
@@ -608,12 +693,18 @@ class CameraService : Service() {
                             paramsF!!.y = initialY + rawY
                             if (abs(rawX) > 10 || abs(rawY) > 10) {
                                 isMoving = true
+                                faceOnly?.setPaused(true)   // no segmentation while dragging
                             }
                             try {
                                 mWindowManager.updateViewLayout(cameraViewBinding.root, paramsF)
                             } catch (unused: java.lang.Exception) {
                             }
                             persistCoordinates(initialX + rawX, initialY + rawY)
+                            return true
+                        }
+
+                        MotionEvent.ACTION_CANCEL -> {
+                            faceOnly?.setPaused(false)
                             return true
                         }
 
@@ -635,6 +726,7 @@ class CameraService : Service() {
                 when (motionEvent.action) {
 
                     MotionEvent.ACTION_DOWN -> {
+                        faceOnly?.setPaused(true)   // no segmentation while resizing
                         initialWidth = params.width
                         initialHeight = params.height
                         initialTouchX = motionEvent.rawX
@@ -676,6 +768,11 @@ class CameraService : Service() {
 
                         return true
                     }
+
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        faceOnly?.setPaused(false)
+                        return true
+                    }
                 }
                 return false
             }
@@ -685,11 +782,13 @@ class CameraService : Service() {
 
     override fun onDestroy() {
         mainHandler.removeCallbacks(cameraOpenTimeout)
+        mainHandler.removeCallbacks(unsupportedAfterRecording)
         isRunning = false
         facecamState = FacecamState.IDLE
         super.onDestroy()
         preferences.edit { putBoolean(PREFS_TOOLS_CAMERA, false) }
         if (::cameraViewBinding.isInitialized) {
+            stopFaceOnly()
             if (isWindowViewAdded) {
                 removeCameraWindow()
             }

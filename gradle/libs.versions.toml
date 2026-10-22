@@ -7,6 +7,7 @@ cameraview = "2.7.2"
 colorpickerview = "2.4.0"
 documentfile = "1.1.0"
 ffmpegKitX6kb = "6.1.1"
+mlkitSegmentationSelfie = "16.0.0-beta6"
 glide = "5.0.5"
 coreKtx = "1.17.0"
 junit = "4.13.2"
@@ -27,6 +28,7 @@ viewpager2 = "1.1.0"
 recyclerview = "1.4.0"
 
 [libraries]
+mlkit-segmentation-selfie = { module = "com.google.mlkit:segmentation-selfie", version.ref = "mlkitSegmentationSelfie" }
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activityKtx" }
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

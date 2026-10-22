@@ -8,35 +8,44 @@ import android.view.WindowManager
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.card.MaterialCardView
 import com.nkd.screenrecorder.R
 import com.nkd.screenrecorder.databinding.BottomSheetFacecamShapeBinding
 
 /**
- * Facecam "Shape" bottom sheet: Rectangle / Circle cards side by side. Tap = apply + close.
- * Shown from CameraService, so it is an overlay window ([context] must carry the app theme).
+ * Facecam "Shape" bottom sheet: Rectangle / Circle / Face only, three small cards in a row.
+ * Tap = apply + close. Shown from CameraService, so it is an overlay window ([context] must
+ * carry the app theme).
  */
 object FacecamShapeSheet {
 
-    fun show(context: Context, isCircle: Boolean, onPick: (circle: Boolean) -> Unit) {
+    enum class Shape { RECTANGLE, CIRCLE, FACE_ONLY }
+
+    fun show(context: Context, current: Shape, onPick: (Shape) -> Unit) {
         val dialog = BottomSheetDialog(context)
         val sheet = BottomSheetFacecamShapeBinding.inflate(LayoutInflater.from(context))
 
         sheet.apply {
-            style(context, rectangleCard, rectangleLabel, rectangleCheck, selected = !isCircle)
-            style(context, circleCard, circleLabel, circleCheck, selected = isCircle)
-            rectangleCard.setOnClickListener {
-                dialog.dismiss()
-                onPick(false)
-            }
-            circleCard.setOnClickListener {
-                dialog.dismiss()
-                onPick(true)
+            listOf(
+                Triple(rectangleCard, rectangleLabel, rectangleCheck) to Shape.RECTANGLE,
+                Triple(circleCard, circleLabel, circleCheck) to Shape.CIRCLE,
+                Triple(faceCard, faceLabel, faceCheck) to Shape.FACE_ONLY,
+            ).forEach { (views, shape) ->
+                val (card, label, check) = views
+                style(context, card, label, check, selected = shape == current)
+                card.setOnClickListener {
+                    dialog.dismiss()
+                    onPick(shape)
+                }
             }
         }
 
         dialog.setContentView(sheet.root)
+        // Only as tall as the content: open fully, no half-collapsed step
+        dialog.behavior.skipCollapsed = true
+        dialog.behavior.state = BottomSheetBehavior.STATE_EXPANDED
         dialog.window?.setType(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE
@@ -44,7 +53,7 @@ object FacecamShapeSheet {
         dialog.show()
     }
 
-    /** Selected: orange 2dp border, orange label, check mark. Otherwise grey 1dp border. */
+    /** Selected: orange 2dp border, orange label, check mark. Otherwise neutral card, grey 1dp border. */
     private fun style(
         context: Context, card: MaterialCardView, label: TextView, check: ImageView, selected: Boolean
     ) {

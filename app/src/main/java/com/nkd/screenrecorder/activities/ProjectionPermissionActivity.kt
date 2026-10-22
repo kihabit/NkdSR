@@ -22,6 +22,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.nkd.screenrecorder.activities.MainActivity.Companion.KEY_DIRECTORY_URI
 import com.nkd.screenrecorder.fragments.SettingFragment
 import com.nkd.screenrecorder.services.RecordScreenService
+import com.nkd.screenrecorder.utils.AudioSourcePrefs
 import com.nkd.screenrecorder.utils.CropCoordinates
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -201,15 +202,17 @@ class ProjectionPermissionActivity : BaseActivity() {
         }
     }
 
-    /** Same checks as the in-app start: writable save folder + RECORD_AUDIO granted. */
+    /** Same checks as the in-app start: writable save folder + RECORD_AUDIO granted
+     *  (RECORD_AUDIO only when the audio source is Microphone — Mute records video only). */
     private fun isRecordingSetupReady(): Boolean {
         val dir = getSavedDirectoryUri() ?: return false
         val hasFolder = contentResolver.persistedUriPermissions.any {
             it.uri == dir && it.isWritePermission
         }
-        val hasMic = ContextCompat.checkSelfPermission(
-            this, android.Manifest.permission.RECORD_AUDIO
-        ) == PackageManager.PERMISSION_GRANTED
+        val hasMic = AudioSourcePrefs.source(this) == AudioSourcePrefs.Source.MUTE ||
+                ContextCompat.checkSelfPermission(
+                    this, android.Manifest.permission.RECORD_AUDIO
+                ) == PackageManager.PERMISSION_GRANTED
         return hasFolder && hasMic
     }
 

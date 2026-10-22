@@ -384,4 +384,16 @@
     <string name="auto_for_this_phone">%1$s لهذا الهاتف</string>
     <string name="overlay_permission_hint">ابحث عن Screen Rec في القائمة وقم بتفعيله</string>
     <string name="facecam_shape_title">شكل الكاميرا الأمامية</string>
+    <string name="facecam_face_only">الوجه فقط</string>
+    <string name="facecam_face_only_unsupported">ميزة الوجه فقط غير مدعومة على هذا الهاتف</string>
+    <string name="audio_source_sheet_title">مصدر الصوت</string>
+    <string name="audio_source_mute_desc">بدون صوت</string>
+    <string name="audio_source_mic_desc">تسجيل صوتك</string>
+    <string name="audio_source_mic_denied">تم رفض إذن الميكروفون. التسجيل بدون صوت.</string>
+    <string name="audio_source_next_recording">يُطبَّق على التسجيل التالي</string>
+    <string name="settings_section_storage">التخزين</string>
+    <string name="settings_section_recording">التسجيل</string>
+    <string name="settings_section_floating_controls">عناصر التحكم العائمة</string>
+    <string name="settings_section_about">حول</string>
+    <string name="countdown_seconds_short">%d ث</string>
 </resources>

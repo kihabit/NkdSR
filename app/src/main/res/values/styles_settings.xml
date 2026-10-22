@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings screen: one shared look for every section header, card and row. -->
+<resources>
+
+    <!-- Small bold orange header above each card -->
+    <style name="Settings.SectionHeader" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">28dp</item>
+        <item name="android:layout_marginEnd">28dp</item>
+        <item name="android:layout_marginTop">16dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/primaryColor</item>
+        <item name="android:letterSpacing">0.02</item>
+    </style>
+
+    <!-- Rounded group card: 16dp corners, subtle 1dp outline, no heavy shadow -->
+    <style name="Settings.Card" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">16dp</item>
+        <item name="android:layout_marginEnd">16dp</item>
+        <item name="cardCornerRadius">16dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="cardBackgroundColor">@color/settings_card_bg</item>
+        <item name="strokeColor">@color/settings_card_stroke</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <!-- One row: ~64dp, 16dp padding, ripple -->
+    <style name="Settings.Row" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minHeight">64dp</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingBottom">12dp</item>
+        <item name="android:background">@drawable/bg_settings_row</item>
+        <item name="android:clickable">true</item>
+        <item name="android:focusable">true</item>
+    </style>
+
+    <!-- 22dp black (dark mode: white) icon in a 40dp soft grey circle -->
+    <style name="Settings.RowIcon" parent="">
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:padding">9dp</item>
+        <item name="android:background">@drawable/bg_settings_icon_circle</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="tint">@color/settings_icon_tint</item>
+    </style>
+
+    <!-- Title + optional subtitle; takes the free width, wraps instead of being cut -->
+    <style name="Settings.RowText" parent="">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginStart">16dp</item>
+        <item name="android:layout_marginEnd">8dp</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="Settings.RowTitle" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+    </style>
+
+    <style name="Settings.RowSubtitle" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <!-- Current value of a choice setting: one-line soft-orange pill with the chevron inside.
+         Never shrinks the title away — the title (weight 1) wraps instead. -->
+    <style name="Settings.RowValue" parent="">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:maxWidth">160dp</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:background">@drawable/bg_settings_value_pill</item>
+        <item name="android:paddingStart">10dp</item>
+        <item name="android:paddingEnd">6dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textColor">@color/primaryColor</item>
+        <item name="android:drawableEnd">@drawable/ic_chevron_small</item>
+        <item name="android:drawablePadding">2dp</item>
+        <item name="android:drawableTint">@color/primaryColor</item>
+    </style>
+
+    <!-- Compact switch for every Settings row: 44×24dp track, 18dp thumb, 48dp touch area.
+         Colours only from the tint lists (no Material purple): on = pill-orange track + orange
+         thumb; off = grey track + white outlined thumb. -->
+    <style name="Settings.Switch" parent="Widget.AppCompat.CompoundButton.Switch">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:minWidth">48dp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:thumb">@drawable/settings_switch_thumb_shape</item>
+        <item name="track">@drawable/settings_switch_track_shape</item>
+        <item name="thumbTint">@color/settings_switch_thumb</item>
+        <item name="thumbTintMode">multiply</item>
+        <item name="trackTint">@color/settings_switch_track</item>
+        <item name="trackTintMode">src_in</item>
+        <item name="switchMinWidth">44dp</item>
+        <item name="showText">false</item>
+        <item name="android:background">@null</item>
+    </style>
+
+    <style name="Settings.RowChevron" parent="">
+        <item name="android:layout_width">20dp</item>
+        <item name="android:layout_height">20dp</item>
+        <item name="android:layout_marginStart">4dp</item>
+        <item name="android:src">@drawable/ic_chevron_small</item>
+        <item name="android:importantForAccessibility">no</item>
+        <item name="tint">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <!-- Divider between rows, inset after the icon (16 + 40 + 16dp) -->
+    <style name="Settings.Divider" parent="">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_marginStart">72dp</item>
+        <item name="android:background">@color/settings_divider</item>
+    </style>
+
+</resources>

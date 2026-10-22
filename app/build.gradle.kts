@@ -91,6 +91,8 @@ dependencies {
     implementation(libs.androidx.viewpager2)
     implementation(libs.colorpickerview)
     implementation(libs.ffmpeg.kit.x6kb)
+    // Facecam "Face only": on-device selfie segmentation (model bundled, 64-bit .so 16 KB aligned)
+    implementation(libs.mlkit.segmentation.selfie)
     implementation(libs.smart.exception.java)
     implementation(libs.photoeditor)
     implementation(libs.ucrop)

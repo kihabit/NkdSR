@@ -39,4 +39,8 @@
     <dimen name="notif_timer_card_padding_h">10dp</dimen>
     <dimen name="notif_timer_card_padding_v">5dp</dimen>
     <dimen name="notif_timer_card_border">1dp</dimen>
+    <!-- Facecam shape sheet cards -->
+    <dimen name="facecam_shape_card_width">96dp</dimen>
+    <dimen name="facecam_shape_card_height">104dp</dimen>
+    <dimen name="facecam_shape_card_gap">12dp</dimen>
 </resources>

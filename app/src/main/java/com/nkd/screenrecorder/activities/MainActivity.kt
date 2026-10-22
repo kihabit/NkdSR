@@ -48,6 +48,7 @@ import com.nkd.screenrecorder.utils.StorageDetailsDialog
 import com.nkd.screenrecorder.utils.LanguageDialog
 import com.nkd.screenrecorder.utils.LocaleHelper
 import com.nkd.screenrecorder.utils.NotificationPanel
+import com.nkd.screenrecorder.utils.AudioSourcePrefs
 import com.nkd.screenrecorder.utils.OverlayPermissionHelper
 import com.nkd.screenrecorder.utils.PrefsHelper
 import com.nkd.screenrecorder.utils.Utils
@@ -76,6 +77,8 @@ class MainActivity : BaseActivity() {
     companion object {
         /** Toolbox → Facecam with CAMERA/overlay missing: run the facecam permission flow. */
         const val EXTRA_START_FACECAM = "extra_start_facecam"
+        /** Toolbox → Audio source → Microphone without RECORD_AUDIO: ask for it here. */
+        const val EXTRA_REQUEST_AUDIO_MIC = "extra_request_audio_mic"
         /** The user really denied CAMERA at least once (a dismissed dialog doesn't count). */
         private const val KEY_FACECAM_CAMERA_DENIED_ONCE = "facecam_camera_denied_once"
         const val KEY_DIRECTORY_URI = "directory_uri"
@@ -194,15 +197,47 @@ class MainActivity : BaseActivity() {
     ) { permissions ->
         // ✅ API 33+: POST_NOTIFICATIONS must never block recording — denying it only means the
         // foreground-service notification may not be shown; the recording itself still works.
-        // Every other requested permission (RECORD_AUDIO, storage on API ≤32) is still required.
+        // RECORD_AUDIO (only asked when the audio source is Microphone) denied → Mute + a short
+        // message, and the recording still starts (video only).
+        // Every other requested permission (storage on API ≤32) is still required.
+        if (permissions[Manifest.permission.RECORD_AUDIO] == false) {
+            AudioSourcePrefs.setSource(this, AudioSourcePrefs.Source.MUTE)
+            Toast.makeText(this, getString(R.string.audio_source_mic_denied), Toast.LENGTH_SHORT).show()
+        }
         val requiredGranted = permissions.entries.all { (permission, granted) ->
-            granted || permission == Manifest.permission.POST_NOTIFICATIONS
+            granted || permission == Manifest.permission.POST_NOTIFICATIONS ||
+                    permission == Manifest.permission.RECORD_AUDIO
         }
         if (requiredGranted) {
             checkDirectoryAndProceed()
         } else {
             Toast.makeText(this, getString(R.string.permission_required_recording), Toast.LENGTH_SHORT).show()
         }
+    }
+
+    /** Audio source → Microphone picked without RECORD_AUDIO (Home, Settings or the toolbox). */
+    private var onAudioMicResult: (() -> Unit)? = null
+    private val audioMicPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                AudioSourcePrefs.setSource(this, AudioSourcePrefs.Source.MICROPHONE)
+            } else {
+                AudioSourcePrefs.setSource(this, AudioSourcePrefs.Source.MUTE)
+                Toast.makeText(this, getString(R.string.audio_source_mic_denied), Toast.LENGTH_SHORT).show()
+            }
+            onAudioMicResult?.invoke()
+            onAudioMicResult = null
+        }
+
+    /** Saves Microphone if RECORD_AUDIO is (or gets) granted, otherwise Mute + a short message. */
+    fun requestMicrophoneForAudioSource(onResult: (() -> Unit)? = null) {
+        if (AudioSourcePrefs.hasMicPermission(this)) {
+            AudioSourcePrefs.setSource(this, AudioSourcePrefs.Source.MICROPHONE)
+            onResult?.invoke()
+            return
+        }
+        onAudioMicResult = onResult
+        audioMicPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
     }
 
     private val screenCaptureLauncher = registerForActivityResult(
@@ -284,6 +319,11 @@ class MainActivity : BaseActivity() {
         setupActionBarWithNavController(navController, appBarConfiguration)
 
         binding.bottomNav.setupWithNavController(navController)
+        // Settings: plain toolbar (back arrow + "Settings"), no app logo
+        val toolbarLogo = binding.toolbar.logo
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            binding.toolbar.logo = if (destination.id == R.id.settingFragment) null else toolbarLogo
+        }
         binding.fab.setOnClickListener {
             if (isRecordingRunning()) {
                 stopRecording()
@@ -401,6 +441,11 @@ class MainActivity : BaseActivity() {
 
         if (savedInstanceState == null && consumeStartFacecamExtra(intent)) {
             startFacecamIfPermitted()   // asks for overlay / CAMERA itself, then starts
+            return
+        }
+
+        if (savedInstanceState == null && consumeAudioMicExtra(intent)) {
+            requestMicrophoneForAudioSource()   // toolbox picked Microphone without RECORD_AUDIO
             return
         }
 
@@ -561,15 +606,29 @@ class MainActivity : BaseActivity() {
         return true
     }
 
+    /** Toolbox picked Microphone as audio source without RECORD_AUDIO: true once, extra removed. */
+    private fun consumeAudioMicExtra(intent: Intent?): Boolean {
+        if (intent?.getBooleanExtra(EXTRA_REQUEST_AUDIO_MIC, false) != true) return false
+        intent.removeExtra(EXTRA_REQUEST_AUDIO_MIC)
+        return true
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (consumeStartFacecamExtra(intent) && !isFacecamStartPending) {
             startFacecamIfPermitted()
         }
+        if (consumeAudioMicExtra(intent)) {
+            requestMicrophoneForAudioSource()
+        }
     }
 
     private fun checkPermissionsAndStart() {
-        val permissions = mutableListOf(Manifest.permission.RECORD_AUDIO)
+        // The microphone is only needed when the audio source is Microphone (Mute = video only)
+        val permissions = mutableListOf<String>()
+        if (AudioSourcePrefs.source(this) == AudioSourcePrefs.Source.MICROPHONE) {
+            permissions.add(Manifest.permission.RECORD_AUDIO)
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)

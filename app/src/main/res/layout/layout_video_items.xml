@@ -4,59 +4,81 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:layout_marginHorizontal="2dp"
+    android:layout_marginVertical="4dp"
     app:cardBackgroundColor="@color/cardBackgroundColorVideoList"
     app:cardCornerRadius="8dp"
     app:cardElevation="0dp"
     app:cardPreventCornerOverlap="true"
-    app:cardUseCompatPadding="true">
+    app:cardUseCompatPadding="false">
 
+    <!-- Card wraps the content: 96dp thumbnail + 2 × 4dp = 104dp; 4dp + 4dp = 8dp between cards -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="4dp">
+        android:layout_height="wrap_content">
 
+        <!-- Thumbnail: fixed 72×96dp (3:4) box, image fills it (centerCrop), 8dp rounded clip -->
         <com.google.android.material.imageview.ShapeableImageView
             android:id="@+id/previewImage"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="56dp"
+            android:layout_height="76dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
+            android:scaleType="centerCrop"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:shapeAppearance="@style/ShapeAppearance.Material3.Corner.ExtraLarge"
-            tools:background="@tools:sample/backgrounds/scenic" />
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.NkdSR.VideoThumbnail"
+            tools:src="@tools:sample/backgrounds/scenic" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_margin="8dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textSize="13sp"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@id/previewImage"
-            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintTop_toTopOf="@id/previewImage"
             tools:text="@tools:sample/full_names" />
 
+        <!-- Size + Edit/Share/⋮: one row, aligned to the thumbnail's bottom -->
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/videoSizeTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="8dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:maxLines="1"
             tools:text="0.0"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toEndOf="@id/previewImage"
-            app:layout_constraintTop_toBottomOf="@id/title" />
+            app:layout_constrainedWidth="true"
+            app:layout_constraintBottom_toBottomOf="@id/previewImage"
+            app:layout_constraintEnd_toStartOf="@id/iconsLayout"
+            app:layout_constraintHorizontal_bias="0"
+            app:layout_constraintStart_toEndOf="@id/previewImage" />
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/videoViewTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_marginBottom="4dp"
             android:background="@drawable/ic_time_background"
+            android:includeFontPadding="false"
+            android:maxLines="1"
             android:paddingStart="4dp"
+            android:paddingTop="1dp"
             android:paddingEnd="4dp"
+            android:paddingBottom="1dp"
             tools:text="32.0"
             android:textSize="10sp"
             android:textColor="@color/white"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toBottomOf="@+id/previewImage"
             app:layout_constraintStart_toStartOf="@+id/previewImage" />
 
         <!-- Edit + Share + More icons row -->
@@ -64,12 +86,11 @@
             android:id="@+id/iconsLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="4dp"
+            android:layout_marginEnd="8dp"
             android:orientation="horizontal"
             android:gravity="center"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/title"
-            app:layout_constraintBottom_toBottomOf="parent">
+            app:layout_constraintBottom_toBottomOf="@id/previewImage">
 
             <!-- Edit -->
             <LinearLayout

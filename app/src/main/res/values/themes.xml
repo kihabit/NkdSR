@@ -79,4 +79,10 @@
         <item name="android:scaleType">fitCenter</item>
     </style>
 
+    <!-- Recordings list: 8dp rounded thumbnail clip -->
+    <style name="ShapeAppearance.NkdSR.VideoThumbnail" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
 </resources>

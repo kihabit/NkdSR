@@ -771,4 +771,16 @@
     <string name="auto_for_this_phone">%1$s pour ce téléphone</string>
     <string name="overlay_permission_hint">Trouvez Screen Rec dans la liste et activez-le</string>
     <string name="facecam_shape_title">Forme de la caméra faciale</string>
+    <string name="facecam_face_only">Visage seul</string>
+    <string name="facecam_face_only_unsupported">Visage seul n\'est pas pris en charge sur ce téléphone</string>
+    <string name="audio_source_sheet_title">Source audio</string>
+    <string name="audio_source_mute_desc">Pas de son</string>
+    <string name="audio_source_mic_desc">Enregistrer votre voix</string>
+    <string name="audio_source_mic_denied">Autorisation du micro refusée. Enregistrement sans son.</string>
+    <string name="audio_source_next_recording">S\'applique au prochain enregistrement</string>
+    <string name="settings_section_storage">Stockage</string>
+    <string name="settings_section_recording">Enregistrement</string>
+    <string name="settings_section_floating_controls">Commandes flottantes</string>
+    <string name="settings_section_about">À propos</string>
+    <string name="countdown_seconds_short">%d s</string>
 </resources>

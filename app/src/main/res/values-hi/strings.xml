@@ -790,4 +790,16 @@
     <string name="auto_for_this_phone">इस फ़ोन के लिए %1$s</string>
     <string name="overlay_permission_hint">सूची में Screen Rec ढूंढें और इसे चालू करें</string>
     <string name="facecam_shape_title">फेसकैम का आकार</string>
+    <string name="facecam_face_only">केवल चेहरा</string>
+    <string name="facecam_face_only_unsupported">इस फ़ोन पर केवल चेहरा समर्थित नहीं है</string>
+    <string name="audio_source_sheet_title">ऑडियो स्रोत</string>
+    <string name="audio_source_mute_desc">कोई आवाज़ नहीं</string>
+    <string name="audio_source_mic_desc">अपनी आवाज़ रिकॉर्ड करें</string>
+    <string name="audio_source_mic_denied">माइक्रोफ़ोन अनुमति नहीं मिली। बिना आवाज़ के रिकॉर्डिंग।</string>
+    <string name="audio_source_next_recording">अगली रिकॉर्डिंग पर लागू होगा</string>
+    <string name="settings_section_storage">स्टोरेज</string>
+    <string name="settings_section_recording">रिकॉर्डिंग</string>
+    <string name="settings_section_floating_controls">फ़्लोटिंग नियंत्रण</string>
+    <string name="settings_section_about">जानकारी</string>
+    <string name="countdown_seconds_short">%d सेकंड</string>
 </resources>

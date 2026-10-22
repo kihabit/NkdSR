@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Facecam "Shape" bottom sheet (FacecamShapeSheet): handle, title, two same-size cards. -->
+<!-- Facecam "Shape" bottom sheet (FacecamShapeSheet): handle, title, three small cards in one
+     centered row. Only as tall as its content. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingBottom="24dp">
+    android:paddingBottom="20dp">
 
     <com.google.android.material.bottomsheet.BottomSheetDragHandleView
         android:layout_width="match_parent"
@@ -17,54 +18,52 @@
         android:fontFamily="sans-serif-medium"
         android:paddingStart="24dp"
         android:paddingEnd="24dp"
-        android:paddingBottom="16dp"
+        android:paddingBottom="12dp"
         android:text="@string/facecam_shape_title"
         android:textColor="?attr/colorOnSurface"
-        android:textSize="20sp"
+        android:textSize="18sp"
         android:textStyle="bold" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
         android:orientation="horizontal"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp">
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp">
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/rectangleCard"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="@dimen/facecam_shape_card_width"
+            android:layout_height="@dimen/facecam_shape_card_height"
             android:clickable="true"
             android:focusable="true"
-            app:cardBackgroundColor="?attr/colorSurface"
-            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="@color/facecam_shape_card_bg"
+            app:cardCornerRadius="14dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/facecam_shape_card_stroke"
             app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:paddingTop="20dp"
-                android:paddingBottom="16dp">
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical">
 
-                <!-- fixed 80dp box so both previews line up -->
+                <!-- fixed 48dp box so all previews line up -->
                 <FrameLayout
-                    android:layout_width="80dp"
-                    android:layout_height="80dp">
+                    android:layout_width="48dp"
+                    android:layout_height="48dp">
 
                     <FrameLayout
-                        android:layout_width="60dp"
-                        android:layout_height="80dp"
+                        android:layout_width="36dp"
+                        android:layout_height="48dp"
                         android:layout_gravity="center"
                         android:background="@drawable/bg_facecam_shape_preview_rect">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
+                            android:layout_width="22dp"
+                            android:layout_height="22dp"
                             android:layout_gravity="center"
                             android:importantForAccessibility="no"
                             android:src="@drawable/ic_facecam_shape_person" />
@@ -75,63 +74,61 @@
                     android:id="@+id/rectangleLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="8dp"
                     android:fontFamily="sans-serif-medium"
+                    android:maxLines="1"
                     android:text="@string/rectangle"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="15sp" />
+                    android:textSize="14sp" />
             </LinearLayout>
 
             <ImageView
                 android:id="@+id/rectangleCheck"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
                 android:layout_gravity="top|end"
-                android:layout_margin="10dp"
+                android:layout_margin="6dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_facecam_shape_check"
                 android:visibility="gone" />
         </com.google.android.material.card.MaterialCardView>
 
         <Space
-            android:layout_width="12dp"
+            android:layout_width="@dimen/facecam_shape_card_gap"
             android:layout_height="0dp" />
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/circleCard"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="@dimen/facecam_shape_card_width"
+            android:layout_height="@dimen/facecam_shape_card_height"
             android:clickable="true"
             android:focusable="true"
-            app:cardBackgroundColor="?attr/colorSurface"
-            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="@color/facecam_shape_card_bg"
+            app:cardCornerRadius="14dp"
             app:cardElevation="0dp"
             app:strokeColor="@color/facecam_shape_card_stroke"
             app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:paddingTop="20dp"
-                android:paddingBottom="16dp">
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical">
 
-                <!-- fixed 80dp box so both previews line up -->
+                <!-- fixed 48dp box so all previews line up -->
                 <FrameLayout
-                    android:layout_width="80dp"
-                    android:layout_height="80dp">
+                    android:layout_width="48dp"
+                    android:layout_height="48dp">
 
                     <FrameLayout
-                        android:layout_width="72dp"
-                        android:layout_height="72dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:layout_gravity="center"
                         android:background="@drawable/bg_facecam_shape_preview_circle">
 
                         <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
                             android:layout_gravity="center"
                             android:importantForAccessibility="no"
                             android:src="@drawable/ic_facecam_shape_person" />
@@ -142,19 +139,85 @@
                     android:id="@+id/circleLabel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="8dp"
                     android:fontFamily="sans-serif-medium"
+                    android:maxLines="1"
                     android:text="@string/circle"
                     android:textColor="?attr/colorOnSurface"
-                    android:textSize="15sp" />
+                    android:textSize="14sp" />
             </LinearLayout>
 
             <ImageView
                 android:id="@+id/circleCheck"
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
                 android:layout_gravity="top|end"
-                android:layout_margin="10dp"
+                android:layout_margin="6dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_facecam_shape_check"
+                android:visibility="gone" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <Space
+            android:layout_width="@dimen/facecam_shape_card_gap"
+            android:layout_height="0dp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/faceCard"
+            android:layout_width="@dimen/facecam_shape_card_width"
+            android:layout_height="@dimen/facecam_shape_card_height"
+            android:clickable="true"
+            android:focusable="true"
+            app:cardBackgroundColor="@color/facecam_shape_card_bg"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/facecam_shape_card_stroke"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <!-- fixed 48dp box so all previews line up -->
+                <FrameLayout
+                    android:layout_width="48dp"
+                    android:layout_height="48dp">
+
+                    <FrameLayout
+                        android:layout_width="40dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:background="@drawable/bg_facecam_shape_preview_face">
+
+                        <ImageView
+                            android:layout_width="30dp"
+                            android:layout_height="30dp"
+                            android:layout_gravity="center"
+                            android:importantForAccessibility="no"
+                            android:src="@drawable/ic_facecam_shape_person" />
+                    </FrameLayout>
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/faceLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:fontFamily="sans-serif-medium"
+                    android:maxLines="1"
+                    android:text="@string/facecam_face_only"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/faceCheck"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="top|end"
+                android:layout_margin="6dp"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_facecam_shape_check"
                 android:visibility="gone" />

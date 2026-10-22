@@ -21,6 +21,7 @@ import com.nkd.screenrecorder.activities.MainActivity
 import com.nkd.screenrecorder.databinding.FragmentSettingBinding
 import com.nkd.screenrecorder.services.NotificationPanelService
 import com.nkd.screenrecorder.services.SSViewService
+import com.nkd.screenrecorder.utils.AudioSourcePrefs
 import com.nkd.screenrecorder.utils.VideoQualityPrefs
 import com.nkd.screenrecorder.utils.RecordingOptionsSheet
 import com.nkd.screenrecorder.utils.DBHelper
@@ -45,21 +46,11 @@ class SettingFragment : Fragment() {
         const val COUNT_DOWN_SECONDS = "count_down_seconds"
         const val KEEP_RECORDING = "keep_recording"
         const val HIDE_FLOAT_VIEW = "hide_float_view"
-        const val AUDIO_SOURCE = "audio_source"
         /** "Notification toolbar" (always-on IDLE panel) — default ON. */
         const val NOTIFICATION_TOOLBAR = "notification_toolbar"
 
-        /** R.array.audio_source: 0 Mute · 1 Microphone. */
-        const val AUDIO_SOURCE_MUTE = 0
-        const val AUDIO_SOURCE_MICROPHONE = 1
-
         const val COUNTDOWN_MIN_SECONDS = 1
         const val COUNTDOWN_MAX_SECONDS = 10
-
-        /** Saved audio source; anything but Mute records the microphone
-         *  (the old 3rd item "Default" also recorded the mic). */
-        fun audioSourceIndex(prefs: SharedPreferences): Int =
-            if (prefs.getInt(AUDIO_SOURCE, -1) == AUDIO_SOURCE_MUTE) AUDIO_SOURCE_MUTE else AUDIO_SOURCE_MICROPHONE
 
         /** Saved countdown, always within 1–10 (old out-of-range values are clamped). */
         fun countdownSeconds(prefs: SharedPreferences): Int =
@@ -127,9 +118,10 @@ class SettingFragment : Fragment() {
         preference = requireContext().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         directoryManager = DirectoryPreferenceManager(requireContext())
 
+        // The activity's toolbar already sits below the status bar — only keep clear of the nav bar
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            binding.root.setPadding(0, systemBars.top, 0, systemBars.bottom)
+            binding.root.setPadding(0, 0, 0, systemBars.bottom)
             insets
         }
 
@@ -156,7 +148,8 @@ class SettingFragment : Fragment() {
             locationPath.setOnClickListener(openSaveLocation)
             selectLocationPath.setOnClickListener(openSaveLocation)
             val path = directoryManager.getDirectoryPath()
-            selectedPathText.text = if (path != null) getString(R.string.current_path, path) else getString(R.string.no_directory_selected)
+            // Row subtitle: just the folder name ("Moj")
+            selectedPathText.text = path ?: getString(R.string.no_directory_selected)
 
             // ── Switches (tapping the whole row toggles the switch → same listener) ──
             switchForCountDown.isChecked = preference.getBoolean(SHOW_COUNT_DOWN, true)
@@ -167,6 +160,11 @@ class SettingFragment : Fragment() {
             switchForCountDown.setOnCheckedChangeListener { _, isChecked ->
                 preference.edit { putBoolean(SHOW_COUNT_DOWN, isChecked) }
                 countdownSeconds.isVisible = isChecked
+                // Showing/hiding the "3 sec" line resizes the row mid-ripple, which could leave
+                // its pressed highlight behind — settle it once the ripple has finished.
+                countdownBeforeStart.postDelayed({
+                    _binding?.countdownBeforeStart?.jumpDrawablesToCurrentState()
+                }, 300L)
             }
             switchForKeepRecording.setOnCheckedChangeListener { _, isChecked ->
                 preference.edit { putBoolean(KEEP_RECORDING, isChecked) }
@@ -194,24 +192,21 @@ class SettingFragment : Fragment() {
             notificationToolbar.setOnClickListener { switchForNotificationToolbar.toggle() }
 
             // ── Countdown Seconds (1–10) ───────────────────────────
-            countdownSeconds.text = getString(R.string.countdown_time, countdownSeconds(preference))
+            countdownSeconds.text = getString(R.string.countdown_seconds_short, countdownSeconds(preference))
             countdownSeconds.setOnClickListener {
                 showCountdownDialog(requireContext(), preference) { value ->
-                    countdownSeconds.text = getString(R.string.countdown_time, value)
+                    countdownSeconds.text = getString(R.string.countdown_seconds_short, value)
                 }
             }
 
-            // ── Audio Source (Mute / Microphone) ───────────────────
-            val audioSources = resources.getStringArray(R.array.audio_source)
-            selectedAudioSource.text = audioSources[audioSourceIndex(preference)]
+            // ── Audio Source (AudioSourcePrefs — same key/sheet as Home and the toolbox) ──
             val openAudioSource = View.OnClickListener {
-                AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.select_audio_source))
-                    .setSingleChoiceItems(R.array.audio_source, audioSourceIndex(preference)) { dlg, which ->
-                        preference.edit { putInt(AUDIO_SOURCE, which) }
-                        selectedAudioSource.text = audioSources[which]
-                        dlg.dismiss()
-                    }.create().show()
+                RecordingOptionsSheet.showAudioSource(
+                    requireContext(),
+                    requestMicPermission = {
+                        (activity as? MainActivity)?.requestMicrophoneForAudioSource { refreshRecordingOptions() }
+                    }
+                ) { refreshRecordingOptions() }
             }
             audioSourceSection.setOnClickListener(openAudioSource)
             selectedAudioSource.setOnClickListener(openAudioSource)
@@ -266,10 +261,37 @@ class SettingFragment : Fragment() {
         val b = _binding ?: return
         b.selectedVideoQuality.text = VideoQualityPrefs.qualitySummary(requireContext())
         b.frameRateQuality.text = VideoQualityPrefs.frameRateSummary(requireContext())
+        b.selectedAudioSource.text = AudioSourcePrefs.summary(requireContext())
+    }
+
+    /**
+     * A row that opened another screen (folder picker, bottom sheet, dialog) can come back still
+     * "pressed" with its ripple frozen grey — clear the pressed state and finish the ripple.
+     */
+    private fun clearPressedRows(view: View) {
+        if (view.isPressed) view.isPressed = false
+        if (view is ViewGroup) for (i in 0 until view.childCount) clearPressedRows(view.getChildAt(i))
+        view.jumpDrawablesToCurrentState()
+    }
+
+    /** Back from a bottom sheet / dialog (they don't pause the activity): settle the rows too. */
+    private val windowFocusListener = android.view.ViewTreeObserver.OnWindowFocusChangeListener { hasFocus ->
+        if (hasFocus) _binding?.root?.let { clearPressedRows(it) }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        _binding?.root?.viewTreeObserver?.addOnWindowFocusChangeListener(windowFocusListener)
+    }
+
+    override fun onStop() {
+        _binding?.root?.viewTreeObserver?.removeOnWindowFocusChangeListener(windowFocusListener)
+        super.onStop()
     }
 
     override fun onResume() {
         super.onResume()
+        _binding?.root?.let { root -> root.post { if (_binding != null) clearPressedRows(root) } }
         refreshRecordingOptions()   // may have been changed on Home / in the toolbox
         if (isAdded) {
             (requireActivity() as MainActivity).hideTopCardView(false)

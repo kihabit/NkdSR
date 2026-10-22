@@ -38,6 +38,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.WindowManager
 import android.widget.Toast
+import android.provider.DocumentsContract
+import android.view.View
+import android.view.Gravity
 import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 import androidx.core.net.toUri
@@ -48,6 +51,7 @@ import com.nkd.screenrecorder.R
 import com.nkd.screenrecorder.activities.MainActivity
 import com.nkd.screenrecorder.databinding.LayoutCountdownBinding
 import com.nkd.screenrecorder.fragments.SettingFragment
+import com.nkd.screenrecorder.utils.AudioSourcePrefs
 import com.nkd.screenrecorder.utils.VideoQualityPrefs
 import com.nkd.screenrecorder.utils.CropCoordinates
 import com.nkd.screenrecorder.utils.LocaleHelper
@@ -74,6 +78,9 @@ class RecordScreenService : Service() {
     private var screenDensity = 0
     private var frameRate = 30
     private var videoBitrate = 8_000_000
+    /** Audio source for the CURRENT recording, read once when it starts (AudioSourcePrefs):
+     *  changing it mid-recording only affects the next one. */
+    private var recordAudio = false
     private lateinit var preferences: SharedPreferences
     private lateinit var windowManager: WindowManager
     private var mediaRecorder: MediaRecorder? = null
@@ -119,6 +126,8 @@ class RecordScreenService : Service() {
 
         private const val CHANNEL_ID = "screen_record_channel"
         private const val NOTIFICATION_ID = 1001
+        /** Countdown window removed → recording starts this much later (never in the video). */
+        private const val COUNTDOWN_REMOVE_DELAY_MS = 150L
         private const val TAG = "RecordScreenService"
 
         var isRecording = false
@@ -234,12 +243,18 @@ class RecordScreenService : Service() {
                 isGifCapture = false
                 isPaused = false
                 resetRecordingTimer()
+                recordAudio = AudioSourcePrefs.recordsMicrophone(this)   // fresh for every recording
                 // Start foreground with MEDIA_PROJECTION type for recording
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    // Microphone type only when this recording really uses the mic
                     startForeground(
                         NOTIFICATION_ID,
                         createRecordingPanel(),
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                        if (recordAudio) {
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                        } else {
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+                        }
                     )
                 } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     startForeground(
@@ -272,6 +287,10 @@ class RecordScreenService : Service() {
             }
 
             ACTION_STOP_RECORDING -> {
+                if (isCountdownActive) {   // Stop during the countdown = cancel it
+                    cancelCountdown()
+                    return START_NOT_STICKY
+                }
                 stopRecording()
                 checkShouldStopService()
             }
@@ -290,12 +309,18 @@ class RecordScreenService : Service() {
                 isGifCapture = true   // fixed 18s capture → no Pause button
                 isPaused = false
                 resetRecordingTimer()
+                recordAudio = AudioSourcePrefs.recordsMicrophone(this)   // fresh for every recording
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    // Microphone type only when this recording really uses the mic
                     startForeground(
                         NOTIFICATION_ID,
                         createRecordingPanel(),
-                        ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                        if (recordAudio) {
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION or ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE
+                        } else {
+                            ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION
+                        }
                     )
                 } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     startForeground(
@@ -405,28 +430,46 @@ class RecordScreenService : Service() {
 
     // ============ RECORDING METHODS ============
 
+    // Countdown before a recording: the number only (small centred window, never touchable)
+    private var countdownView: View? = null
+    private var countdownTimer: CountDownTimer? = null
+    /** File created for the recording the countdown is waiting for (deleted on cancel). */
+    private var countdownOutputUri: Uri? = null
+    private var pendingCountdownStart: Runnable? = null
+    private val isCountdownActive get() = countdownView != null || countdownTimer != null
+
     private fun showCountdownAndStartRecording(
         resultCode: Int,
         data: Intent,
         outputUri: Uri,
     ) {
+        removeCountdownWindow()   // never two countdowns at once
         val countDown = SettingFragment.countdownSeconds(preferences)   // always 1–10
         val countDownBinding =
             LayoutCountdownBinding.inflate(LayoutInflater.from(this), null, false)
+        // WRAP_CONTENT around the number only, centred, and NOT_TOUCHABLE: it never receives
+        // touches, so they all reach the apps behind (also under Android 12+ untrusted-touch
+        // rules — the window covers only the number, not the screen).
         val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
                 WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
             else
-                WindowManager.LayoutParams.TYPE_PHONE,
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT
-        )
+        ).apply {
+            gravity = Gravity.CENTER
+        }
+        countDownBinding.tvCountDown.text =
+            String.format(java.util.Locale.getDefault(), "%d", countDown)
 
-        // Countdown is ON by default now: without overlay permission (or if the window can't
-        // be added) start recording right away instead of crashing.
+        // Without overlay permission (or if the window can't be added) start recording right
+        // away instead of crashing.
         try {
             windowManager.addView(countDownBinding.root, params)
         } catch (e: Exception) {
@@ -435,17 +478,71 @@ class RecordScreenService : Service() {
             sendCloseActivityBroadcast()
             return
         }
-        object : CountDownTimer(countDown * 1000L, 1000L) {
+        countdownView = countDownBinding.root
+        countdownOutputUri = outputUri
+        countdownTimer = object : CountDownTimer(countDown * 1000L, 1000L) {
             override fun onFinish() {
-                windowManager.removeView(countDownBinding.root)
-                startRecording(resultCode, data, outputUri)
-                sendCloseActivityBroadcast()
+                countdownTimer = null
+                removeCountdownWindow()
+                countdownOutputUri = null
+                // Start only after the number is gone, so it is never in the first frames
+                val start = Runnable {
+                    pendingCountdownStart = null
+                    startRecording(resultCode, data, outputUri)
+                    sendCloseActivityBroadcast()
+                }
+                pendingCountdownStart = start
+                mainHandler.postDelayed(start, COUNTDOWN_REMOVE_DELAY_MS)
             }
 
             override fun onTick(millisUntilFinished: Long) {
-                countDownBinding.tvCountDown.text = String.format(java.util.Locale.getDefault(), "%d", millisUntilFinished / 1000)
+                // +999 so it shows 3, 2, 1 (not 2, 1, 0) for a 3 s countdown
+                countDownBinding.tvCountDown.text = String.format(
+                    java.util.Locale.getDefault(), "%d", (millisUntilFinished + 999) / 1000
+                )
             }
         }.start()
+    }
+
+    /** Stops the timer and removes the countdown window — safe in every path, never throws. */
+    private fun removeCountdownWindow() {
+        countdownTimer?.cancel()
+        countdownTimer = null
+        countdownView?.let { view ->
+            try {
+                if (view.isAttachedToWindow) windowManager.removeViewImmediate(view)
+            } catch (e: Exception) {
+                Log.w(TAG, "Countdown window already removed: ${e.message}")
+            }
+        }
+        countdownView = null
+    }
+
+    /**
+     * Stop pressed during the countdown: no recording. The projection
+     * consent is simply never used (no MediaProjection exists yet), the empty output file is
+     * deleted, the state/UI go back to "not recording" and the service stops.
+     */
+    private fun cancelCountdown() {
+        if (!isCountdownActive) return
+        removeCountdownWindow()
+        countdownOutputUri?.let { uri ->
+            try {
+                if (!DocumentsContract.deleteDocument(contentResolver, uri)) {
+                    contentResolver.delete(uri, null, null)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Could not delete the unused recording file", e)
+            }
+        }
+        countdownOutputUri = null
+        cleanupRecordingMediaProjection()   // nothing to stop unless it was already created
+        resetRecordingTimer()
+        isPaused = false
+        updateRecordingState(false)
+        sendRecordingStateBroadcast(false)
+        Log.d(TAG, "Countdown cancelled — recording not started")
+        checkShouldStopService()
     }
 
     private fun startRecording(resultCode: Int, data: Intent, outputUri: Uri) {
@@ -480,11 +577,8 @@ class RecordScreenService : Service() {
         try {
             fileDescriptor = contentResolver.openFileDescriptor(outputUri, "w")
                 ?: throw IOException("Failed to open file descriptor")
-            // ✅ Compare by INDEX of R.array.audio_source (0 = Mute, 1 = Microphone) — the item
-            // TEXT is translated. Never set / old index 2 ("Default", also the mic) → Microphone.
-            val audioSourceFromSetting =
-                if (SettingFragment.audioSourceIndex(preferences) == SettingFragment.AUDIO_SOURCE_MUTE) "Mute"
-                else "MIC"
+            // Mute (or no RECORD_AUDIO) → video only: no audio source, no audio encoder
+            val withAudio = recordAudio
 
             mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 MediaRecorder(this)
@@ -492,12 +586,8 @@ class RecordScreenService : Service() {
                 @Suppress("DEPRECATION")
                 MediaRecorder()
             }.apply {
-                if (audioSourceFromSetting != "Mute") {
-                    when (audioSourceFromSetting) {
-                        "MIC" -> setAudioSource(MediaRecorder.AudioSource.MIC)
-                        "INTERNAL" -> setAudioSource(MediaRecorder.AudioSource.DEFAULT)
-                        else -> setAudioSource(MediaRecorder.AudioSource.MIC)
-                    }
+                if (withAudio) {
+                    setAudioSource(MediaRecorder.AudioSource.MIC)
                 }
 
                 setVideoSource(MediaRecorder.VideoSource.SURFACE)
@@ -506,7 +596,7 @@ class RecordScreenService : Service() {
                 setVideoSize(screenWidth, screenHeight)
                 setVideoEncoder(MediaRecorder.VideoEncoder.H264)
 
-                if (audioSourceFromSetting != "Mute") {
+                if (withAudio) {
                     setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
                     setAudioEncodingBitRate(256_000)  // 256kbps —
                     setAudioSamplingRate(44_100)        // standard
@@ -1251,6 +1341,9 @@ class RecordScreenService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        removeCountdownWindow()
+        pendingCountdownStart?.let { mainHandler.removeCallbacks(it) }
+        pendingCountdownStart = null
         try {
             unregisterReceiver(screenStateReceiver)
         } catch (e: Exception) {

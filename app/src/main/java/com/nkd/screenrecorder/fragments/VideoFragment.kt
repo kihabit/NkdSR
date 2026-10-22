@@ -38,10 +38,10 @@ import com.nkd.screenrecorder.activities.VideoPlayerActivity
 import com.nkd.screenrecorder.activities.VideoTrimmingActivity
 import com.nkd.screenrecorder.adapter.VideoListAdapter
 import com.nkd.screenrecorder.databinding.FragmentVideoBinding
-import com.nkd.screenrecorder.fragments.SettingFragment.Companion.AUDIO_SOURCE
 import com.nkd.screenrecorder.fragments.SettingFragment.Companion.PREFS_NAME
 import com.nkd.screenrecorder.model.VideoItem
 import com.nkd.screenrecorder.services.RecordScreenService
+import com.nkd.screenrecorder.utils.AudioSourcePrefs
 import com.nkd.screenrecorder.utils.VideoQualityPrefs
 import com.nkd.screenrecorder.utils.RecordingOptionsSheet
 import com.nkd.screenrecorder.utils.StorageDetailsDialog
@@ -102,25 +102,16 @@ class VideoFragment : Fragment(), MenuProvider {
                     _binding?.videoQualityValue?.text = VideoQualityPrefs.homeSummary(requireContext())
                 }
             }
-            // Mute / Microphone — nothing saved = Microphone (same as the service)
-            val audioSources = resources.getStringArray(R.array.audio_source)
-            audioSourceValue.text = audioSources[SettingFragment.audioSourceIndex(preference)]
+            // Audio source (AudioSourcePrefs — same key/sheet as Settings and the toolbox)
+            audioSourceValue.text = AudioSourcePrefs.summary(requireContext())
             audioQualityCard.setOnClickListener {
-                val alertBuilder = AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.select_audio_source))
-                    .setSingleChoiceItems(
-                        R.array.audio_source,
-                        SettingFragment.audioSourceIndex(preference),
-                    ) { dialogInterface, which ->
-                        preference.edit {
-                            putInt(AUDIO_SOURCE, which)
-                        }
-                        audioSourceValue.text = audioSources[which]
-                        dialogInterface.dismiss()
-
+                val refresh = { _binding?.audioSourceValue?.text = AudioSourcePrefs.summary(requireContext()) }
+                RecordingOptionsSheet.showAudioSource(
+                    requireContext(),
+                    requestMicPermission = {
+                        (activity as? MainActivity)?.requestMicrophoneForAudioSource { refresh() }
                     }
-                val dialog = alertBuilder.create()
-                dialog.show()
+                ) { refresh() }
             }
         }
         listenOnViewModel()
@@ -328,6 +319,7 @@ class VideoFragment : Fragment(), MenuProvider {
         super.onResume()
         // May have been changed in Settings / the toolbox
         _binding?.videoQualityValue?.text = VideoQualityPrefs.homeSummary(requireContext())
+        _binding?.audioSourceValue?.text = AudioSourcePrefs.summary(requireContext())
         fetchVideos()
         val filter = IntentFilter(RecordScreenService.NEW_RECORDING_ADDED)
 

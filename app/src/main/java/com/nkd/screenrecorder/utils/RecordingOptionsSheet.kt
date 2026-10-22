@@ -5,15 +5,17 @@ import android.os.Build
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
+import android.widget.Toast
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.nkd.screenrecorder.R
 import com.nkd.screenrecorder.databinding.BottomSheetRecordingOptionsBinding
 import com.nkd.screenrecorder.databinding.ItemRecordingOptionBinding
+import com.nkd.screenrecorder.services.RecordScreenService
 import com.nkd.screenrecorder.utils.VideoQualityPrefs.FrameRate
 import com.nkd.screenrecorder.utils.VideoQualityPrefs.Quality
 
 /**
- * "Video quality" / "Frame rate" bottom sheets — one radio list, tap = save + close.
+ * "Video quality" / "Frame rate" / "Audio source" bottom sheets — one radio list, tap = save + close.
  * Used by Home, Settings and the floating toolbox ([overlay] = shown from a service).
  */
 object RecordingOptionsSheet {
@@ -63,6 +65,41 @@ object RecordingOptionsSheet {
                 )
             }
         show(context, R.string.frame_rate_sheet_title, options, overlay, onChanged)
+    }
+
+    /**
+     * Mute / Microphone. Picking Microphone without RECORD_AUDIO doesn't save it — it calls
+     * [requestMicPermission] instead (the caller asks and saves Microphone, or Mute if denied).
+     * Changed while recording → short note: it applies to the next recording.
+     */
+    fun showAudioSource(
+        context: Context,
+        overlay: Boolean = false,
+        requestMicPermission: () -> Unit,
+        onChanged: () -> Unit
+    ) {
+        val current = AudioSourcePrefs.source(context)
+        val options = AudioSourcePrefs.Source.entries.map { s ->
+            Option(
+                label = AudioSourcePrefs.label(context, s),
+                subtitle = AudioSourcePrefs.subtitle(context, s),
+                recommended = false,
+                selected = s == current,
+                onPick = {
+                    if (s != current &&
+                        (RecordScreenService.isRecording || RecordScreenService.isPaused)
+                    ) {
+                        Toast.makeText(context, R.string.audio_source_next_recording, Toast.LENGTH_SHORT).show()
+                    }
+                    if (s == AudioSourcePrefs.Source.MICROPHONE && !AudioSourcePrefs.hasMicPermission(context)) {
+                        requestMicPermission()
+                    } else {
+                        AudioSourcePrefs.setSource(context, s)
+                    }
+                }
+            )
+        }
+        show(context, R.string.audio_source_sheet_title, options, overlay, onChanged)
     }
 
     private fun show(

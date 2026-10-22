@@ -6,7 +6,8 @@
     android:background="@android:color/transparent"
     android:padding="7dp">
 
-    <FrameLayout
+    <!-- MaskedFrameLayout: plain frame, or "Face only" (person kept, background transparent) -->
+    <com.nkd.screenrecorder.widgets.MaskedFrameLayout
         android:id="@+id/cameraFrameLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -29,7 +30,7 @@
             app:cameraPreview="texture"
             app:cameraAudio="off"
             app:cameraRequestPermissions="false" />
-    </FrameLayout>
+    </com.nkd.screenrecorder.widgets.MaskedFrameLayout>
 
 
     <androidx.constraintlayout.widget.ConstraintLayout

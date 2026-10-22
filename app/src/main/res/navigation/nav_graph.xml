@@ -45,7 +45,7 @@
     <fragment
         android:id="@+id/settingFragment"
         android:name="com.nkd.screenrecorder.fragments.SettingFragment"
-        android:label="@string/app_name" />
+        android:label="@string/settings" />
     <fragment
         android:id="@+id/imagePreviewFragment"
         android:name="com.nkd.screenrecorder.fragments.ImagePreviewFragment"

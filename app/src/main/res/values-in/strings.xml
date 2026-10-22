@@ -380,4 +380,16 @@
     <string name="auto_for_this_phone">%1$s untuk ponsel ini</string>
     <string name="overlay_permission_hint">Temukan Screen Rec di daftar dan aktifkan</string>
     <string name="facecam_shape_title">Bentuk facecam</string>
+    <string name="facecam_face_only">Wajah saja</string>
+    <string name="facecam_face_only_unsupported">Wajah saja tidak didukung di ponsel ini</string>
+    <string name="audio_source_sheet_title">Sumber audio</string>
+    <string name="audio_source_mute_desc">Tanpa suara</string>
+    <string name="audio_source_mic_desc">Rekam suara Anda</string>
+    <string name="audio_source_mic_denied">Izin mikrofon ditolak. Merekam tanpa suara.</string>
+    <string name="audio_source_next_recording">Berlaku untuk rekaman berikutnya</string>
+    <string name="settings_section_storage">Penyimpanan</string>
+    <string name="settings_section_recording">Perekaman</string>
+    <string name="settings_section_floating_controls">Kontrol mengambang</string>
+    <string name="settings_section_about">Tentang</string>
+    <string name="countdown_seconds_short">%d dtk</string>
 </resources>

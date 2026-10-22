@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Settings switch track: on = the value-pill soft orange, off = light grey (dark grey at night) -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:alpha="0.38" android:color="@color/settings_switch_track_off" android:state_enabled="false" />
+    <item android:color="@color/settings_pill_bg" android:state_checked="true" />
+    <item android:color="@color/settings_switch_track_off" />
+</selector>
