@@ -16,3 +16,7 @@ local.properties
 keystore.properties
 keystore/*.jks
 keystore/*.keystore
+
+.idea/codeStyles/
+.idea/deviceManager.xml
+.idea/vcs.xml
