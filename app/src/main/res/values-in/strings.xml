@@ -392,4 +392,10 @@
     <string name="settings_section_floating_controls">Kontrol mengambang</string>
     <string name="settings_section_about">Tentang</string>
     <string name="countdown_seconds_short">%d dtk</string>
+    <string name="audio_quality_sheet_title">Kualitas audio</string>
+    <string name="audio_quality_good">Baik</string>
+    <string name="audio_quality_best">Terbaik</string>
+    <string name="audio_quality_excellent">Sempurna</string>
+    <string name="audio_kbps_value">%1$d kbps</string>
+    <string name="audio_chip_format">%1$s ▾</string>
 </resources>

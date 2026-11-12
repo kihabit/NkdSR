@@ -802,4 +802,10 @@
     <string name="settings_section_floating_controls">फ़्लोटिंग नियंत्रण</string>
     <string name="settings_section_about">जानकारी</string>
     <string name="countdown_seconds_short">%d सेकंड</string>
+    <string name="audio_quality_sheet_title">ऑडियो क्वालिटी</string>
+    <string name="audio_quality_good">अच्छी</string>
+    <string name="audio_quality_best">बेस्ट</string>
+    <string name="audio_quality_excellent">शानदार</string>
+    <string name="audio_kbps_value">%1$d kbps</string>
+    <string name="audio_chip_format">%1$s ▾</string>
 </resources>

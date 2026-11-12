@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One radio row of the recording options sheet; the whole row is the tap target. -->
+<!-- One radio row of the recording options sheet; the whole row is the tap target.
+     audioChip (right side) is only shown in the Video quality sheet. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -74,4 +75,25 @@
             tools:text="1080p for this phone"
             tools:visibility="visible" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/audioChip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/bg_audio_chip"
+        android:clickable="true"
+        android:focusable="true"
+        android:fontFamily="sans-serif-medium"
+        android:minWidth="72dp"
+        android:gravity="center"
+        android:paddingStart="12dp"
+        android:paddingTop="7dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="7dp"
+        android:textColor="@color/primaryColor"
+        android:textSize="13sp"
+        android:visibility="gone"
+        tools:text="Best ▾"
+        tools:visibility="visible" />
 </LinearLayout>

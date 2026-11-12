@@ -51,6 +51,7 @@ import com.nkd.screenrecorder.R
 import com.nkd.screenrecorder.activities.MainActivity
 import com.nkd.screenrecorder.databinding.LayoutCountdownBinding
 import com.nkd.screenrecorder.fragments.SettingFragment
+import com.nkd.screenrecorder.utils.AudioQualityPrefs
 import com.nkd.screenrecorder.utils.AudioSourcePrefs
 import com.nkd.screenrecorder.utils.VideoQualityPrefs
 import com.nkd.screenrecorder.utils.CropCoordinates
@@ -598,7 +599,8 @@ class RecordScreenService : Service() {
 
                 if (withAudio) {
                     setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                    setAudioEncodingBitRate(256_000)  // 256kbps —
+                    // Good 96 / Best 128 / Excellent 256 kbps — chip of the selected video quality
+                    setAudioEncodingBitRate(AudioQualityPrefs.bitrate(this@RecordScreenService))
                     setAudioSamplingRate(44_100)        // standard
                     setAudioChannels(2)                 // stereo
                 }
@@ -606,6 +608,7 @@ class RecordScreenService : Service() {
                 setVideoEncodingBitRate(videoBitrate)
                 setVideoFrameRate(frameRate)
                 setOrientationHint(0)
+                Log.d(TAG, "audio bitrate = ${AudioQualityPrefs.bitrate(this@RecordScreenService)}")
 
                 prepare()
             }

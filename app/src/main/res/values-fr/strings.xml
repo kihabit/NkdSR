@@ -783,4 +783,10 @@
     <string name="settings_section_floating_controls">Commandes flottantes</string>
     <string name="settings_section_about">À propos</string>
     <string name="countdown_seconds_short">%d s</string>
+    <string name="audio_quality_sheet_title">Qualité audio</string>
+    <string name="audio_quality_good">Bonne</string>
+    <string name="audio_quality_best">Meilleure</string>
+    <string name="audio_quality_excellent">Excellente</string>
+    <string name="audio_kbps_value">%1$d kbps</string>
+    <string name="audio_chip_format">%1$s ▾</string>
 </resources>
